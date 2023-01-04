@@ -23,6 +23,9 @@
 
 namespace {
 
+// The only browser that currently get focused
+CefRefPtr<CefBrowser> current_focused_browser_ = nullptr;
+
 constexpr auto kEventType = "type";
 constexpr auto kEventValue = "value";
 
@@ -66,6 +69,10 @@ const std::optional<std::tuple<double, double, double>> GetPointAnDPIFromArgs(
     return std::make_tuple(*x, *y, *z);
 }
 
+}
+
+const CefRefPtr<CefBrowser> WebviewHandler::CurrentFocusedBorwser() {
+    return current_focused_browser_;
 }
 
 WebviewHandler::WebviewHandler(flutter::BinaryMessenger* messenger, const int browser_id) {
@@ -187,7 +194,7 @@ void WebviewHandler::CloseAllBrowsers(bool force_close) {
         //                                       force_close));
         return;
     }
-std::cout << "CloseAllBrowsers" << std::endl;
+
     this->browser_->GetHost()->CloseBrowser(force_close);
 }
 
@@ -384,8 +391,15 @@ void WebviewHandler::HandleMethodCall(
         const auto deltaY = *std::get_if<int>(&(*list)[3]);
         this->sendScrollEvent(x, y, deltaX, deltaY);
         result->Success();
-    }
-    else if (method_call.method_name().compare("goForward") == 0) {
+    } else if (method_call.method_name().compare("focus") == 0) {
+        current_focused_browser_ = this->browser_;
+        result->Success();
+    } else if (method_call.method_name().compare("unfocus") == 0) {
+        if (current_focused_browser_->IsSame(this->browser_)) {
+            current_focused_browser_ = nullptr;
+        }
+        result->Success();
+    } else if (method_call.method_name().compare("goForward") == 0) {
         this->goForward();
         result->Success();
     }

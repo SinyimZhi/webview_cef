@@ -93,6 +93,8 @@ public:
     void reload();
     void openDevTools();
 
+    static const CefRefPtr<CefBrowser> CurrentFocusedBorwser();
+
 private:
     uint32_t width_ = 1;
     uint32_t height_ = 1;

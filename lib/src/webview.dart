@@ -32,6 +32,7 @@ class WebViewController extends ValueNotifier<bool> {
   static int _id = 0;
 
   final Completer<void> _creatingCompleter = Completer<void>();
+  late final int _browserID;
   int _textureId = 0;
   bool _isDisposed = false;
   WebviewEventsListener? _listener;
@@ -52,11 +53,11 @@ class WebViewController extends ValueNotifier<bool> {
     await _startCEF();
 
     try {
-      final browserID = ++_id;
-      _broswerChannel = MethodChannel('webview_cef/$browserID');
+      _browserID = ++_id;
+      _broswerChannel = MethodChannel('webview_cef/$_browserID');
       _broswerChannel.setMethodCallHandler(_methodCallhandler);
-      _textureId = await _pluginChannel.invokeMethod<int>('createBrowser', browserID) ?? 0;
-      _eventChannel = EventChannel('webview_cef/$browserID/events');
+      _textureId = await _pluginChannel.invokeMethod<int>('createBrowser', _browserID) ?? 0;
+      _eventChannel = EventChannel('webview_cef/$_browserID/events');
       _eventStreamSubscription = _eventChannel.receiveBroadcastStream().listen(_handleBrowserEvents);
     } on PlatformException catch (e) {
       _creatingCompleter.completeError(e);
@@ -146,6 +147,22 @@ class WebViewController extends ValueNotifier<bool> {
     return _broswerChannel.invokeMethod('openDevTools');
   }
 
+  Future<void> _focus() async {
+    if (_isDisposed) {
+      return;
+    }
+    assert(value);
+    return _broswerChannel.invokeMethod('focus');
+  }
+
+  Future<void> _unfocus() async {
+    if (_isDisposed) {
+      return;
+    }
+    assert(value);
+    return _broswerChannel.invokeMethod('unfocus');
+  }
+
   /// Moves the virtual cursor to [position].
   Future<void> _cursorMove(Offset position) async {
     if (_isDisposed) {
@@ -215,6 +232,7 @@ class WebView extends StatefulWidget {
 
 class WebViewState extends State<WebView> {
   final GlobalKey _key = GlobalKey();
+  final _focusNode = FocusNode();
 
   WebViewController get _controller => widget.controller;
 
@@ -233,36 +251,46 @@ class WebViewState extends State<WebView> {
 
   Widget _buildInner() {
     return NotificationListener<SizeChangedLayoutNotification>(
-        onNotification: (notification) {
-          _reportSurfaceSize(context);
-          return true;
-        },
-        child: SizeChangedLayoutNotifier(
-            child: Listener(
-          onPointerHover: (ev) {
-            _controller._cursorMove(ev.localPosition);
+      onNotification: (notification) {
+        _reportSurfaceSize(context);
+        return true;
+      },
+      child: SizeChangedLayoutNotifier(
+        child: Focus(
+          focusNode: _focusNode,
+          autofocus: false,
+          onFocusChange: (focused) {
+            focused ? _controller._focus() : _controller._unfocus();
           },
-          onPointerDown: (ev) {
-            _controller._cursorClickDown(ev.localPosition);
-          },
-          onPointerUp: (ev) {
-            _controller._cursorClickUp(ev.localPosition);
-          },
-          onPointerMove: (ev) {
-            _controller._cursorDragging(ev.localPosition);
-          },
-          onPointerSignal: (signal) {
-            if (signal is PointerScrollEvent) {
-              _controller._setScrollDelta(signal.localPosition,
-                  signal.scrollDelta.dx.round(), signal.scrollDelta.dy.round());
-            }
-          },
-          onPointerPanZoomUpdate: (event) {
-            _controller._setScrollDelta(event.localPosition,
-                event.panDelta.dx.round(), event.panDelta.dy.round());
-          },
-          child: Texture(textureId: _controller._textureId),
-        )));
+          child: Listener(
+            onPointerHover: (ev) {
+              _controller._cursorMove(ev.localPosition);
+            },
+            onPointerDown: (ev) {
+              _focusNode.requestFocus();
+              _controller._cursorClickDown(ev.localPosition);
+            },
+            onPointerUp: (ev) {
+              _controller._cursorClickUp(ev.localPosition);
+            },
+            onPointerMove: (ev) {
+              _controller._cursorDragging(ev.localPosition);
+            },
+            onPointerSignal: (signal) {
+              if (signal is PointerScrollEvent) {
+                _controller._setScrollDelta(signal.localPosition,
+                    signal.scrollDelta.dx.round(), signal.scrollDelta.dy.round());
+              }
+            },
+            onPointerPanZoomUpdate: (event) {
+              _controller._setScrollDelta(event.localPosition,
+                  event.panDelta.dx.round(), event.panDelta.dy.round());
+            },
+            child: Texture(textureId: _controller._textureId),
+          ),
+        ),
+      ),
+    );
   }
 
   void _reportSurfaceSize(BuildContext context) async {
