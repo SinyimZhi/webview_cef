@@ -31,6 +31,7 @@ constexpr auto kEventValue = "value";
 
 constexpr auto kEventTitleChanged = "titleChanged";
 constexpr auto kEventURLChanged = "urlChanged";
+constexpr auto kEventCursorChanged = "cursorChanged";
 
 // Returns a data: URI with the specified contents.
 std::string GetDataURI(const std::string& data, const std::string& mime_type) {
@@ -124,6 +125,14 @@ void WebviewHandler::OnAddressChange(CefRefPtr<CefBrowser> browser,
     if (frame->IsMain()) {
         EmitEvent(kEventURLChanged, url.ToString());
     }
+}
+
+bool WebviewHandler::OnCursorChange(CefRefPtr<CefBrowser> browser,
+                                CefCursorHandle cursor,
+                                cef_cursor_type_t type,
+                                const CefCursorInfo& custom_cursor_info) {
+    EmitEvent(kEventCursorChanged, static_cast<int32_t>(type));
+    return false;
 }
 
 void WebviewHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {

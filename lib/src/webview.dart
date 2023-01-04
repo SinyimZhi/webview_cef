@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import 'webview_cursor.dart';
 import 'webview_events_listener.dart';
 
 const MethodChannel _pluginChannel = MethodChannel("webview_cef");
@@ -27,6 +28,7 @@ _startCEF() async {
 
 const _kEventTitleChanged = "titleChanged";
 const _kEventURLChanged = "urlChanged";
+const _kEventCursorChanged = "cursorChanged";
 
 class WebViewController extends ValueNotifier<bool> {
   static int _id = 0;
@@ -39,6 +41,8 @@ class WebViewController extends ValueNotifier<bool> {
   late final MethodChannel _broswerChannel;
   late final EventChannel _eventChannel;
   StreamSubscription? _eventStreamSubscription;
+
+  final ValueNotifier<CursorType> _cursorType = ValueNotifier(CursorType.pointer);
 
   Future<void> get ready => _creatingCompleter.future;
 
@@ -86,6 +90,9 @@ class WebViewController extends ValueNotifier<bool> {
       case _kEventTitleChanged:
         _listener?.onTitleChanged?.call(m['value'] as String);
         return;
+      case _kEventCursorChanged:
+        _cursorType.value = CursorType.values[m['value'] as int];
+        return;
       default:
     }
   }
@@ -101,6 +108,7 @@ class WebViewController extends ValueNotifier<bool> {
       _isDisposed = true;
       await _broswerChannel.invokeMethod('dispose');
       _eventStreamSubscription?.cancel();
+      _cursorType.dispose();
     }
     super.dispose();
   }
@@ -286,7 +294,16 @@ class WebViewState extends State<WebView> {
               _controller._setScrollDelta(event.localPosition,
                   event.panDelta.dx.round(), event.panDelta.dy.round());
             },
-            child: Texture(textureId: _controller._textureId),
+            child: ValueListenableBuilder<CursorType>(
+              valueListenable: _controller._cursorType,
+              child: Texture(textureId: _controller._textureId),
+              builder: (context, value, child) {
+                return MouseRegion(
+                  cursor: value.transform,
+                  child: child,
+                );
+              },
+            ),
           ),
         ),
       ),

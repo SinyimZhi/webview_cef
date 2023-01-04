@@ -41,6 +41,10 @@ public:
     virtual void OnAddressChange(CefRefPtr<CefBrowser> browser,
                                  CefRefPtr<CefFrame> frame,
                                  const CefString& url) override;
+    virtual bool OnCursorChange(CefRefPtr<CefBrowser> browser,
+                                CefCursorHandle cursor,
+                                cef_cursor_type_t type,
+                                const CefCursorInfo& custom_cursor_info) override;
     
     // CefLifeSpanHandler methods:
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
