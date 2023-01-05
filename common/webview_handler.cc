@@ -401,10 +401,12 @@ void WebviewHandler::HandleMethodCall(
         this->sendScrollEvent(x, y, deltaX, deltaY);
         result->Success();
     } else if (method_call.method_name().compare("focus") == 0) {
+        this->browser_->GetHost()->SetFocus(true);
         current_focused_browser_ = this->browser_;
         result->Success();
     } else if (method_call.method_name().compare("unfocus") == 0) {
         if (current_focused_browser_->IsSame(this->browser_)) {
+            this->browser_->GetHost()->SetFocus(false);
             current_focused_browser_ = nullptr;
         }
         result->Success();
