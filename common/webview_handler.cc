@@ -72,7 +72,7 @@ const std::optional<std::tuple<double, double, double>> GetPointAnDPIFromArgs(
 
 }
 
-const CefRefPtr<CefBrowser> WebviewHandler::CurrentFocusedBorwser() {
+const CefRefPtr<CefBrowser> WebviewHandler::CurrentFocusedBrowser() {
     return current_focused_browser_;
 }
 
