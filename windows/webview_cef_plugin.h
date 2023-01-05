@@ -7,8 +7,14 @@
 #include <memory>
 
 #include "include/cef_app.h"
+#include "osr_ime_handler_win.h"
 
 namespace webview_cef {
+extern std::unique_ptr<OsrImeHandlerWin> ime_handler;
+
+void OnIMEStartComposition();
+void OnIMEComposition(UINT message, WPARAM wParam, LPARAM lParam);
+void OnIMECancelCompositionEvent();
 
 class WebviewCefPlugin : public flutter::Plugin {
 public:

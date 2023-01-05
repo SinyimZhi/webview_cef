@@ -4,17 +4,13 @@
 
 #include "webview_cef_plugin.h"
 #include "include/cef_app.h"
+#include "osr_ime_handler_win.h"
 
 void WebviewCefPluginCApiRegisterWithRegistrar(
 	FlutterDesktopPluginRegistrarRef registrar) {
 	webview_cef::WebviewCefPlugin::RegisterWithRegistrar(
 		flutter::PluginRegistrarManager::GetInstance()
 		->GetRegistrar<flutter::PluginRegistrarWindows>(registrar));
-}
-
-FLUTTER_PLUGIN_EXPORT void initCEFProcesses() {
-	CefMainArgs mainArgs;
-	CefExecuteProcess(mainArgs, nullptr, nullptr);
 }
 
 bool IsKeyDown(WPARAM wparam) {
@@ -101,9 +97,44 @@ int GetCefKeyboardModifiers(WPARAM wparam, LPARAM lparam) {
 	return modifiers;
 }
 
-FLUTTER_PLUGIN_EXPORT void processKeyEventForCEF(unsigned int message, unsigned __int64 wParam, __int64 lParam)
+FLUTTER_PLUGIN_EXPORT void InitCEFProcesses() {
+	CefMainArgs mainArgs;
+	CefExecuteProcess(mainArgs, nullptr, nullptr);
+}
+
+FLUTTER_PLUGIN_EXPORT void InitCEFIMEHandler(const HWND hwnd) {
+	DCHECK(hwnd);
+	DCHECK(!webview_cef::ime_handler);
+
+	webview_cef::ime_handler.reset(new webview_cef::OsrImeHandlerWin(hwnd));
+}
+
+FLUTTER_PLUGIN_EXPORT void ProcessMessageForCEF(unsigned int message, unsigned __int64 wParam, __int64 lParam) {
+	switch (message) {
+    case WM_IME_SETCONTEXT:
+    	return;
+    case WM_IME_STARTCOMPOSITION:
+	  	webview_cef::OnIMEStartComposition();
+    	return;
+    case WM_IME_COMPOSITION:
+		webview_cef::OnIMEComposition(message, wParam, lParam);
+    	return;
+    case WM_IME_ENDCOMPOSITION:
+		webview_cef::OnIMECancelCompositionEvent();
+    	return;
+	case WM_SYSCHAR:
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_CHAR:
+		processKeyEventForCEF(message, wParam, lParam);
+		return;
+    }
+}
+
+void processKeyEventForCEF(unsigned int message, unsigned __int64 wParam, __int64 lParam)
 {
-	if (message != WM_SYSCHAR && message != WM_SYSKEYDOWN && message != WM_SYSKEYUP && message != WM_KEYDOWN && message != WM_KEYUP && message != WM_CHAR) return;
 	CefKeyEvent event;
 	event.windows_key_code = (int)wParam;
 	event.native_key_code = (int)lParam;

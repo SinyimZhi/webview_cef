@@ -1,6 +1,7 @@
 #ifndef FLUTTER_PLUGIN_WEBVIEW_CEF_PLUGIN_C_API_H_
 #define FLUTTER_PLUGIN_WEBVIEW_CEF_PLUGIN_C_API_H_
 
+#include <windows.h>
 #include <flutter_plugin_registrar.h>
 
 #ifdef FLUTTER_PLUGIN_IMPL
@@ -16,9 +17,13 @@ extern "C" {
 FLUTTER_PLUGIN_EXPORT void WebviewCefPluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar);
 
-FLUTTER_PLUGIN_EXPORT void initCEFProcesses();
+FLUTTER_PLUGIN_EXPORT void InitCEFProcesses();
 
-FLUTTER_PLUGIN_EXPORT void processKeyEventForCEF(unsigned int message, unsigned __int64 wParam, __int64 lParam);
+FLUTTER_PLUGIN_EXPORT void InitCEFIMEHandler(const HWND hwnd);
+
+FLUTTER_PLUGIN_EXPORT void ProcessMessageForCEF(unsigned int message, unsigned __int64 wParam, __int64 lParam);
+
+void processKeyEventForCEF(unsigned int message, unsigned __int64 wParam, __int64 lParam);
 
 #if defined(__cplusplus)
 }  // extern "C"
