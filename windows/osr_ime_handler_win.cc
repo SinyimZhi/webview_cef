@@ -381,9 +381,8 @@ void OsrImeHandlerWin::UpdateCaretPosition(int index) {
   MoveImeWindow();
 }
 
-void OsrImeHandlerWin::ChangeCompositionRange(
-    const CefRange& selection_range,
-    const std::vector<CefRect>& bounds) {
+void OsrImeHandlerWin::ChangeCompositionRange(const CefRange& selection_range,
+                                              const std::vector<CefRect>& bounds) {
   composition_range_ = selection_range;
   composition_bounds_ = bounds;
   MoveImeWindow();

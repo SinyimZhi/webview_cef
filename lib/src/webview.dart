@@ -219,13 +219,13 @@ class WebViewController extends ValueNotifier<bool> {
   }
 
   /// Sets the surface size to the provided [size].
-  Future<void> _setSize(double dpi, Size size) async {
+  Future<void> _setSize(double dpi, Size size, Offset viewOffset) async {
     if (_isDisposed) {
       return;
     }
     assert(value);
     return _broswerChannel
-        .invokeMethod('setSize', [dpi, size.width, size.height]);
+        .invokeMethod('setSize', [dpi, size.width, size.height, viewOffset.dx, viewOffset.dy]);
   }
 }
 
@@ -311,12 +311,17 @@ class WebViewState extends State<WebView> {
   }
 
   void _reportSurfaceSize(BuildContext context) async {
-    double dpi = MediaQuery.of(context).devicePixelRatio;
     final box = _key.currentContext?.findRenderObject() as RenderBox?;
     if (box != null) {
+      final dpi = MediaQuery.of(context).devicePixelRatio;
       await _controller.ready;
-      unawaited(
-          _controller._setSize(dpi, Size(box.size.width, box.size.height)));
+      final translation = box.getTransformTo(null).getTranslation();
+      unawaited(_controller._setSize(
+        dpi,
+        Size(box.size.width, box.size.height),
+        Offset(translation.x, translation.y),
+        // box.localToGlobal(Offset.zero),
+      ));
     }
   }
 }

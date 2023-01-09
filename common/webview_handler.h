@@ -21,6 +21,9 @@ public CefRenderHandler{
 public:
     std::function<void(const void*, int32_t width, int32_t height)> onPaintCallback;
     std::function<void()> onBrowserClose;
+    std::function<void (CefRefPtr<CefBrowser> browser,
+                        const CefRange& selection_range,
+                        const CefRenderHandler::RectList& character_bounds)> onImeCompositionRangeChangedCallback;
 
     explicit WebviewHandler(flutter::BinaryMessenger* messenger, const int browser_id);
     ~WebviewHandler();
@@ -79,7 +82,11 @@ public:
                                DragOperationsMask allowed_ops,
                                int x,
                                int y) override;
-    
+    virtual void OnImeCompositionRangeChanged(CefRefPtr<CefBrowser> browser,
+                                              const CefRange& selection_range,
+                                              const CefRenderHandler::RectList& character_bounds) override;
+
+
     // Request that all existing browser windows close.
     void CloseAllBrowsers(bool force_close);
 
@@ -88,6 +95,7 @@ public:
 
     void sendScrollEvent(int x, int y, int deltaX, int deltaY);
     void changeSize(float a_dpi, int width, int height);
+    void updateViewOffset(int x, int y);
     void cursorClick(int x, int y, bool up);
     void cursorMove(int x, int y, bool dragging);
     void sendKeyEvent(CefKeyEvent ev);
@@ -102,6 +110,8 @@ public:
 private:
     uint32_t width_ = 1;
     uint32_t height_ = 1;
+    int x_ = 0;
+    int y_ = 0;
     float dpi_ = 1.0;
     bool is_dragging_ = false;
 

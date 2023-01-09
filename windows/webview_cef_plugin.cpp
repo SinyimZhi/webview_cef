@@ -153,6 +153,12 @@ namespace webview_cef {
 			handler->onBrowserClose = [texture_handler] () mutable {
 				delete texture_handler;
 			};
+			handler->onImeCompositionRangeChangedCallback = [] (CefRefPtr<CefBrowser> browser,
+														const CefRange& selection_range,
+														const CefRenderHandler::RectList& character_bounds) {
+				if (ime_handler)
+					ime_handler->ChangeCompositionRange(selection_range, character_bounds);
+			};
 
 			app->CreateBrowser(handler);
 			result->Success(flutter::EncodableValue(texture_handler->texture_id()));

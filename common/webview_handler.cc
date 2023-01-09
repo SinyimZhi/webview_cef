@@ -55,19 +55,33 @@ const std::optional<std::pair<int, int>> GetPointFromArgs(
     return std::make_pair(*x, *y);
 }
 
-const std::optional<std::tuple<double, double, double>> GetPointAnDPIFromArgs(
+const std::optional<std::tuple<double, double, double, double, double>> GetPointAnDPIFromArgs(
     const flutter::EncodableValue* args) {
     const flutter::EncodableList* list = std::get_if<flutter::EncodableList>(args);
-    if (!list || list->size() != 3) {
+    if (!list || list->size() != 5) {
         return std::nullopt;
     }
-    const auto x = std::get_if<double>(&(*list)[0]);
-    const auto y = std::get_if<double>(&(*list)[1]);
-    const auto z = std::get_if<double>(&(*list)[2]);
-    if (!x || !y || !z) {
+    const auto dpi = std::get_if<double>(&(*list)[0]);
+    const auto w = std::get_if<double>(&(*list)[1]);
+    const auto h = std::get_if<double>(&(*list)[2]);
+    const auto x = std::get_if<double>(&(*list)[3]);
+    const auto y = std::get_if<double>(&(*list)[4]);
+    if (!dpi || !w || !h || !x || !y) {
         return std::nullopt;
     }
-    return std::make_tuple(*x, *y, *z);
+    return std::make_tuple(*dpi, *w, *h, *x, *y);
+}
+
+int LogicalToDevice(int value, float device_scale_factor) {
+    float scaled_val = static_cast<float>(value) * device_scale_factor;
+    return static_cast<int>(std::floor(scaled_val));
+}
+
+CefRect LogicalToDevice(const CefRect& value, float device_scale_factor, int offsetX, int offsetY) {
+    return CefRect(LogicalToDevice(value.x + offsetX, device_scale_factor),
+                   LogicalToDevice(value.y + offsetY, device_scale_factor),
+                   LogicalToDevice(value.width, device_scale_factor),
+                   LogicalToDevice(value.height, device_scale_factor));
 }
 
 }
@@ -241,6 +255,12 @@ void WebviewHandler::changeSize(float a_dpi, int w, int h)
     this->browser_->GetHost()->WasResized();
 }
 
+void WebviewHandler::updateViewOffset(int x, int y)
+{
+    this->x_ = x;
+    this->y_ = y;
+}
+
 void WebviewHandler::cursorClick(int x, int y, bool up)
 {
     CefMouseEvent ev;
@@ -283,6 +303,22 @@ bool WebviewHandler::StartDragging(CefRefPtr<CefBrowser> browser,
     this->browser_->GetHost()->DragTargetDragEnter(drag_data, ev, DRAG_OPERATION_EVERY);
     is_dragging_ = true;
     return true;
+}
+
+void WebviewHandler::OnImeCompositionRangeChanged(CefRefPtr<CefBrowser> browser,
+                                  const CefRange& selection_range,
+                                  const CefRenderHandler::RectList& character_bounds) {
+    CEF_REQUIRE_UI_THREAD();
+    if (!this->onImeCompositionRangeChangedCallback)
+        return;
+
+    // Convert from view coordinates to application window coordinates.
+    CefRenderHandler::RectList app_view_bounds;
+    CefRenderHandler::RectList::const_iterator it = character_bounds.begin();
+    for (; it != character_bounds.end(); ++it) {
+        app_view_bounds.push_back(LogicalToDevice(*it, this->dpi_, this->x_, this->y_));
+    }
+    this->onImeCompositionRangeChangedCallback(browser, selection_range, app_view_bounds);
 }
 
 void WebviewHandler::sendKeyEvent(CefKeyEvent ev)
@@ -361,12 +397,13 @@ void WebviewHandler::HandleMethodCall(
     else if (method_call.method_name().compare("setSize") == 0) {
         auto tuple = GetPointAnDPIFromArgs(method_call.arguments());
         if (tuple) {
-            const auto [dpi, width, height] = tuple.value();
+            const auto [dpi, width, height, x, y] = tuple.value();
             this->changeSize(
                 static_cast<float>(dpi),
                 static_cast<int>(width),
                 static_cast<int>(height)
             );
+            this->updateViewOffset(static_cast<int>(x), static_cast<int>(y));
         }
 
         result->Success();
