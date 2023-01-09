@@ -114,11 +114,15 @@ private:
     int y_ = 0;
     float dpi_ = 1.0;
     bool is_dragging_ = false;
+    bool is_focused_ = false;
 
     CefRefPtr<CefBrowser> browser_;
     std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> browser_channel_;
     std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
     std::unique_ptr<flutter::EventChannel<flutter::EncodableValue>> event_channel_;
+
+    void Focus();
+    void Unfocus();
 
     void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue> &method_call,

@@ -129,6 +129,22 @@ WebviewHandler::WebviewHandler(flutter::BinaryMessenger* messenger, const int br
 
 WebviewHandler::~WebviewHandler() {}
 
+void WebviewHandler::Focus() {
+    if (this->is_focused_) return;
+    this->is_focused_ = true;
+    this->browser_->GetHost()->SetFocus(true);
+    current_focused_browser_ = this->browser_;
+}
+
+void WebviewHandler::Unfocus() {
+    if (!this->is_focused_) return;
+    this->is_focused_ = false;
+    this->browser_->GetHost()->SetFocus(false);
+    if (current_focused_browser_ && current_focused_browser_->IsSame(this->browser_)) {
+        current_focused_browser_ = nullptr;
+    }
+}
+
 void WebviewHandler::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) {
     EmitEvent(kEventTitleChanged, title.ToString());
 }
@@ -409,6 +425,8 @@ void WebviewHandler::HandleMethodCall(
         result->Success();
     }
     else if (method_call.method_name().compare("cursorClickDown") == 0) {
+        this->Focus();
+
         const auto point = GetPointFromArgs(method_call.arguments());
         this->cursorClick(point->first, point->second, false);
         result->Success();
@@ -437,15 +455,8 @@ void WebviewHandler::HandleMethodCall(
         const auto deltaY = *std::get_if<int>(&(*list)[3]);
         this->sendScrollEvent(x, y, deltaX, deltaY);
         result->Success();
-    } else if (method_call.method_name().compare("focus") == 0) {
-        this->browser_->GetHost()->SetFocus(true);
-        current_focused_browser_ = this->browser_;
-        result->Success();
     } else if (method_call.method_name().compare("unfocus") == 0) {
-        if (current_focused_browser_->IsSame(this->browser_)) {
-            this->browser_->GetHost()->SetFocus(false);
-            current_focused_browser_ = nullptr;
-        }
+        this->Unfocus();
         result->Success();
     } else if (method_call.method_name().compare("goForward") == 0) {
         this->goForward();
@@ -464,6 +475,8 @@ void WebviewHandler::HandleMethodCall(
         result->Success();
     }
     else if (method_call.method_name().compare("dispose") == 0) {
+        this->Unfocus();
+
         this->browser_->GetHost()->CloseBrowser(false);
         result->Success();
     }

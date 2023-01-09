@@ -155,14 +155,6 @@ class WebViewController extends ValueNotifier<bool> {
     return _broswerChannel.invokeMethod('openDevTools');
   }
 
-  Future<void> _focus() async {
-    if (_isDisposed) {
-      return;
-    }
-    assert(value);
-    return _broswerChannel.invokeMethod('focus');
-  }
-
   Future<void> _unfocus() async {
     if (_isDisposed) {
       return;
@@ -253,6 +245,12 @@ class WebViewState extends State<WebView> {
   }
 
   @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox.expand(key: _key, child: _buildInner());
   }
@@ -268,15 +266,21 @@ class WebViewState extends State<WebView> {
           focusNode: _focusNode,
           autofocus: false,
           onFocusChange: (focused) {
-            focused ? _controller._focus() : _controller._unfocus();
+            if (!focused) _controller._unfocus();
           },
           child: Listener(
             onPointerHover: (ev) {
               _controller._cursorMove(ev.localPosition);
             },
-            onPointerDown: (ev) {
-              _focusNode.requestFocus();
+            onPointerDown: (ev) async {
               _controller._cursorClickDown(ev.localPosition);
+
+              // Fixes for getting focus immediately.
+              if (!_focusNode.hasFocus) {
+                _focusNode.unfocus();
+                await Future<void>.delayed(const Duration(milliseconds: 1));
+                if (mounted) FocusScope.of(context).requestFocus(_focusNode);
+              }
             },
             onPointerUp: (ev) {
               _controller._cursorClickUp(ev.localPosition);
