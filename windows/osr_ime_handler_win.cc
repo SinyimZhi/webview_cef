@@ -148,8 +148,9 @@ void OsrImeHandlerWin::DestroyImeWindow() {
 
 void OsrImeHandlerWin::MoveImeWindow() {
   // Does nothing when the target window has no input focus.
-  if (GetFocus() != hwnd_)
-    return;
+  // @TODO Always false here.
+  // if (GetFocus() != hwnd_)
+  //   return;
 
   CefRect rc = ime_rect_;
   int location = cursor_index_;
