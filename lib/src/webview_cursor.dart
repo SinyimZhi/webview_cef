@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart';
+part of webview;
 
 /// Cursor type values.
 /// https://bitbucket.org/chromiumembedded/cef/src/ecc89d7d93ebafd0ed86716b09f20ab4206a21ae/include/internal/cef_types.h#lines-2310

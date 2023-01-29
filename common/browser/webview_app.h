@@ -2,8 +2,9 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#ifndef CEF_TESTS_CEFSIMPLE_SIMPLE_APP_H_
-#define CEF_TESTS_CEFSIMPLE_SIMPLE_APP_H_
+#ifndef COMMON_BROWSER_WEBVIEW_APP_H_
+#define COMMON_BROWSER_WEBVIEW_APP_H_
+#pragma once
 
 #include "include/cef_app.h"
 #include <functional>
@@ -41,4 +42,4 @@ private:
     IMPLEMENT_REFCOUNTING(WebviewApp);
 };
 
-#endif  // CEF_TESTS_CEFSIMPLE_SIMPLE_APP_H_
+#endif  // COMMON_BROWSER_WEBVIEW_APP_H_

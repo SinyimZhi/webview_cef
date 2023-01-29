@@ -20,18 +20,12 @@
 #include "include/views/cef_window.h"
 #include "include/wrapper/cef_closure_task.h"
 #include "include/wrapper/cef_helpers.h"
+#include "message.h"
 
 namespace {
 
 // The only browser that currently get focused
 CefRefPtr<CefBrowser> current_focused_browser_ = nullptr;
-
-constexpr auto kEventType = "type";
-constexpr auto kEventValue = "value";
-
-constexpr auto kEventTitleChanged = "titleChanged";
-constexpr auto kEventURLChanged = "urlChanged";
-constexpr auto kEventCursorChanged = "cursorChanged";
 
 // Returns a data: URI with the specified contents.
 std::string GetDataURI(const std::string& data, const std::string& mime_type) {
@@ -474,6 +468,16 @@ void WebviewHandler::HandleMethodCall(
         this->openDevTools();
         result->Success();
     }
+    else if (method_call.method_name().compare("evaluateJavaScript") == 0) {
+        auto msg = async_channel_message::EvaluateJavaScript::CreateCefProcessMessage(method_call.arguments());
+        if (!msg) {
+            result->Error(kErrorInvalidArguments);
+            return;
+        }
+
+        this->browser_->GetMainFrame()->SendProcessMessage(PID_RENDERER, msg);
+        result->Success();
+    }
     else if (method_call.method_name().compare("dispose") == 0) {
         this->Unfocus();
 
@@ -483,4 +487,19 @@ void WebviewHandler::HandleMethodCall(
     else {
         result->NotImplemented();
     }
+}
+
+bool WebviewHandler::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+                                              CefRefPtr<CefFrame> frame,
+                                              CefProcessId source_process,
+                                              CefRefPtr<CefProcessMessage> message) {
+
+    auto message_name = message->GetName();
+    if (message_name == ipc::EvaluateJavaScriptResponse) {
+        auto v = async_channel_message::EvaluateJavaScript::CreateFlutterChannelMessage(message);
+        this->EmitAsyncChannelMessage(v);
+        return true;
+    }
+
+    return false;
 }

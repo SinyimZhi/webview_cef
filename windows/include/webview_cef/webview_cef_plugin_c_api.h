@@ -17,7 +17,7 @@ extern "C" {
 FLUTTER_PLUGIN_EXPORT void WebviewCefPluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar);
 
-FLUTTER_PLUGIN_EXPORT void InitCEFProcesses();
+FLUTTER_PLUGIN_EXPORT int InitCEFProcesses();
 
 FLUTTER_PLUGIN_EXPORT void InitCEFIMEHandler(const HWND hwnd);
 

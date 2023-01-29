@@ -2,6 +2,8 @@
 
 #include <flutter/plugin_registrar_windows.h>
 
+#include "client_app.h"
+#include "renderer/client_app_renderer.h"
 #include "webview_cef_plugin.h"
 #include "include/cef_app.h"
 #include "osr_ime_handler_win.h"
@@ -97,9 +99,21 @@ int GetCefKeyboardModifiers(WPARAM wparam, LPARAM lparam) {
 	return modifiers;
 }
 
-FLUTTER_PLUGIN_EXPORT void InitCEFProcesses() {
+FLUTTER_PLUGIN_EXPORT int InitCEFProcesses() {
+	CefRefPtr<CefCommandLine> command_line = CefCommandLine::CreateCommandLine();
+	auto args = ::GetCommandLineW();
+	command_line->InitFromString(args);
+
 	CefMainArgs mainArgs;
-	CefExecuteProcess(mainArgs, nullptr, nullptr);
+	CefRefPtr<CefApp> app = nullptr;
+	ClientApp::ProcessType process_type = ClientApp::GetProcessType(command_line);
+	if (process_type == ClientApp::BrowserProcess) {
+		// app = new ClientAppBrowser();
+	} else if (process_type == ClientApp::RendererProcess) {
+		app = new ClientAppRenderer();
+	}
+
+	return CefExecuteProcess(mainArgs, app, nullptr);
 }
 
 FLUTTER_PLUGIN_EXPORT void InitCEFIMEHandler(const HWND hwnd) {

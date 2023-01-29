@@ -27,10 +27,16 @@ list(APPEND PLUGIN_SOURCES
   "texture_handler.h"
   "osr_ime_handler_win.cc"
   "osr_ime_handler_win.h"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_app.cc"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_app.h"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_handler.cc"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_handler.h"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/message.h"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/message.cc"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/client_app.cc"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/client_app.h"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/browser/webview_app.cc"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/browser/webview_app.h"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/browser/webview_handler.cc"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/browser/webview_handler.h"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/renderer/client_app_renderer.h"
+  "${CMAKE_CURRENT_LIST_DIR}/../common/renderer/client_app_renderer.cc"
 )
 
 # Define the plugin library target. Its name must not be changed (see comment

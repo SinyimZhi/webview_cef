@@ -8,7 +8,7 @@
 #include <memory>
 #include <thread>
 
-#include "webview_app.h"
+#include "browser/webview_app.h"
 #include "texture_handler.h"
 
 namespace webview_cef {

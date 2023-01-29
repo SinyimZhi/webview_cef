@@ -1,3 +1,5 @@
+part of webview;
+
 typedef TitleChangeCb = void Function(String title);
 typedef UrlChangeCb = void Function(String url);
 

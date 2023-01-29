@@ -1,3 +1,5 @@
+library webview;
+
 import 'dart:async';
 
 import 'package:flutter/gestures.dart';
@@ -5,8 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import 'webview_cursor.dart';
-import 'webview_events_listener.dart';
+part 'webview_cursor.dart';
+part 'webview_events_listener.dart';
+part 'async_channel_message.dart';
 
 const MethodChannel _pluginChannel = MethodChannel("webview_cef");
 bool _hasCallStartCEF = false;
@@ -29,6 +32,7 @@ _startCEF() async {
 const _kEventTitleChanged = "titleChanged";
 const _kEventURLChanged = "urlChanged";
 const _kEventCursorChanged = "cursorChanged";
+const _kEventAsyncChannelMessage = 'asyncChannelMessage';
 
 class WebViewController extends ValueNotifier<bool> {
   static int _id = 0;
@@ -93,6 +97,9 @@ class WebViewController extends ValueNotifier<bool> {
       case _kEventCursorChanged:
         _cursorType.value = CursorType.values[m['value'] as int];
         return;
+      case _kEventAsyncChannelMessage:
+        _AsyncChannelMessageManager.handleChannelEvents(m['value']);
+        return;
       default:
     }
   }
@@ -145,6 +152,15 @@ class WebViewController extends ValueNotifier<bool> {
     }
     assert(value);
     return _broswerChannel.invokeMethod('goBack');
+  }
+
+  Future<dynamic> evaluateJavaScript(String code, [bool throwEvalError = false]) async {
+    if (_isDisposed) {
+      return;
+    }
+    assert(value);
+    final message = EvaluateJavaScriptMessage(code, throwEvalError: throwEvalError);
+    return _AsyncChannelMessageManager.invokeMethod(_broswerChannel, message);
   }
 
   Future<void> openDevTools() async {

@@ -1,5 +1,6 @@
 #ifndef WEBVIEW_CEF_WINDOWS_TEXTURE_HANDLER
 #define WEBVIEW_CEF_WINDOWS_TEXTURE_HANDLER
+#pragma once
 
 #include <flutter/plugin_registrar_windows.h>
 
@@ -26,4 +27,4 @@ public:
     void onPaintCallback(const void* buffer, int32_t width, int32_t height);
 };
 
-#endif
+#endif  // WEBVIEW_CEF_WINDOWS_TEXTURE_HANDLER

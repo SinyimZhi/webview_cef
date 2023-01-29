@@ -2,16 +2,33 @@
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 
-#ifndef CEF_TESTS_CEFSIMPLE_SIMPLE_HANDLER_H_
-#define CEF_TESTS_CEFSIMPLE_SIMPLE_HANDLER_H_
+#ifndef COMMON_BROWSER_WEBVIEW_HANDLER_H_
+#define COMMON_BROWSER_WEBVIEW_HANDLER_H_
+#pragma once
 
 #include "include/cef_client.h"
 #include <flutter/method_channel.h>
 #include <flutter/standard_method_codec.h>
 #include <flutter/binary_messenger.h>
 #include <flutter/event_channel.h>
+#include <flutter/method_result.h>
 
 #include <functional>
+
+namespace
+{
+
+constexpr auto kEventType = "type";
+constexpr auto kEventValue = "value";
+
+constexpr auto kEventTitleChanged = "titleChanged";
+constexpr auto kEventURLChanged = "urlChanged";
+constexpr auto kEventCursorChanged = "cursorChanged";
+constexpr auto kEventAsyncChannelMessage = "asyncChannelMessage";
+
+constexpr auto kErrorInvalidArguments = "InvalidArguments";
+
+}
 
 class WebviewHandler : public CefClient,
 public CefDisplayHandler,
@@ -37,6 +54,10 @@ public:
     }
     virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
     virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override { return this; }
+    virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+                                          CefRefPtr<CefFrame> frame,
+                                          CefProcessId source_process,
+                                          CefRefPtr<CefProcessMessage> message) override;
     
     // CefDisplayHandler methods:
     virtual void OnTitleChange(CefRefPtr<CefBrowser> browser,
@@ -48,7 +69,7 @@ public:
                                 CefCursorHandle cursor,
                                 cef_cursor_type_t type,
                                 const CefCursorInfo& custom_cursor_info) override;
-    
+
     // CefLifeSpanHandler methods:
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
     virtual bool DoClose(CefRefPtr<CefBrowser> browser) override;
@@ -139,8 +160,18 @@ private:
         }
     }
 
+    void EmitAsyncChannelMessage(const flutter::EncodableValue value) {
+        if (event_sink_) {
+            const auto event = flutter::EncodableValue(flutter::EncodableMap{
+                {flutter::EncodableValue(kEventType), flutter::EncodableValue(kEventAsyncChannelMessage)},
+                {flutter::EncodableValue(kEventValue), value},
+            });
+            event_sink_->Success(event);
+        }
+    }
+
     // Include the default reference counting implementation.
     IMPLEMENT_REFCOUNTING(WebviewHandler);
 };
 
-#endif  // CEF_TESTS_CEFSIMPLE_SIMPLE_HANDLER_H_
+#endif  // COMMON_BROWSER_WEBVIEW_HANDLER_H_
