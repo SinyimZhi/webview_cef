@@ -129,6 +129,14 @@ class WebViewController extends ValueNotifier<bool> {
     return _broswerChannel.invokeMethod('loadUrl', url);
   }
 
+  Future<void> stopLoad() async {
+    if (_isDisposed) {
+      return;
+    }
+    assert(value);
+    return _broswerChannel.invokeMethod('stopLoad');
+  }
+
   /// Reloads the current document.
   Future<void> reload() async {
     if (_isDisposed) {
@@ -138,12 +146,22 @@ class WebViewController extends ValueNotifier<bool> {
     return _broswerChannel.invokeMethod('reload');
   }
 
+  Future<bool> canGoForward() async {
+    assert(value);
+    return await _broswerChannel.invokeMethod('canGoForward');
+  }
+
   Future<void> goForward() async {
     if (_isDisposed) {
       return;
     }
     assert(value);
     return _broswerChannel.invokeMethod('goForward');
+  }
+
+  Future<bool> canGoBack() async {
+    assert(value);
+    return await _broswerChannel.invokeMethod('canGoBack');
   }
 
   Future<void> goBack() async {

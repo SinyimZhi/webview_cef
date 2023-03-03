@@ -121,9 +121,12 @@ public:
     void cursorMove(int x, int y, bool dragging);
     void sendKeyEvent(CefKeyEvent ev);
     void loadUrl(std::string url);
+    bool canGoForward();
     void goForward();
+    bool canGoBack();
     void goBack();
     void reload();
+    void stopLoad();
     void openDevTools();
 
     static const CefRefPtr<CefBrowser> CurrentFocusedBrowser();

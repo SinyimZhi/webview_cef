@@ -341,8 +341,16 @@ void WebviewHandler::loadUrl(std::string url)
     this->browser_->GetMainFrame()->LoadURL(url);
 }
 
+bool WebviewHandler::canGoForward() {
+    return this->browser_->GetMainFrame()->GetBrowser()->CanGoForward();
+}
+
 void WebviewHandler::goForward() {
     this->browser_->GetMainFrame()->GetBrowser()->GoForward();
+}
+
+bool WebviewHandler::canGoBack() {
+    return this->browser_->GetMainFrame()->GetBrowser()->CanGoBack();
 }
 
 void WebviewHandler::goBack() {
@@ -351,6 +359,10 @@ void WebviewHandler::goBack() {
 
 void WebviewHandler::reload() {
     this->browser_->GetMainFrame()->GetBrowser()->Reload();
+}
+
+void WebviewHandler::stopLoad() {
+    this->browser_->GetMainFrame()->GetBrowser()->StopLoad();
 }
 
 void WebviewHandler::openDevTools() {
@@ -449,15 +461,27 @@ void WebviewHandler::HandleMethodCall(
         const auto deltaY = *std::get_if<int>(&(*list)[3]);
         this->sendScrollEvent(x, y, deltaX, deltaY);
         result->Success();
-    } else if (method_call.method_name().compare("unfocus") == 0) {
+    }
+    else if (method_call.method_name().compare("unfocus") == 0) {
         this->Unfocus();
         result->Success();
-    } else if (method_call.method_name().compare("goForward") == 0) {
+    }
+    else if (method_call.method_name().compare("goForward") == 0) {
         this->goForward();
         result->Success();
     }
+    else if (method_call.method_name().compare("canGoForward") == 0) {
+        result->Success(flutter::EncodableValue(this->canGoForward()));
+    }
     else if (method_call.method_name().compare("goBack") == 0) {
         this->goBack();
+        result->Success();
+    }
+    else if (method_call.method_name().compare("canGoBack") == 0) {
+        result->Success(flutter::EncodableValue(this->canGoBack()));
+    }
+    else if (method_call.method_name().compare("stopLoad") == 0) {
+        this->stopLoad();
         result->Success();
     }
     else if (method_call.method_name().compare("reload") == 0) {
