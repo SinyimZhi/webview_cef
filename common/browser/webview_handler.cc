@@ -20,6 +20,8 @@
 #include "include/views/cef_window.h"
 #include "include/wrapper/cef_closure_task.h"
 #include "include/wrapper/cef_helpers.h"
+#include "include/wrapper/cef_message_router.h"
+
 #include "message.h"
 
 namespace {
@@ -77,6 +79,32 @@ CefRect LogicalToDevice(const CefRect& value, float device_scale_factor, int off
                    LogicalToDevice(value.width, device_scale_factor),
                    LogicalToDevice(value.height, device_scale_factor));
 }
+
+class MessageHandler : public CefMessageRouterBrowserSide::Handler {
+public:
+    typedef std::function<void (const CefString& request)> OnQueryCallback;
+
+	explicit MessageHandler(OnQueryCallback cb) : onQueryCallback_(cb) {};
+
+	// Called due to cefQuery execution in message_router.html.
+	bool OnQuery(CefRefPtr<CefBrowser> browser,
+				 CefRefPtr<CefFrame> frame,
+				 int64 query_id,
+				 const CefString& request,
+				 bool persistent,
+				 CefRefPtr<Callback> callback) override {
+
+		std::cout << "MessageHandler::OnQuery::request = " << request << std::endl;
+        if (this->onQueryCallback_) this->onQueryCallback_(request);
+		callback->Success("");
+		return true;
+	}
+
+private:
+    OnQueryCallback onQueryCallback_;
+
+	DISALLOW_COPY_AND_ASSIGN(MessageHandler);
+};
 
 }
 
@@ -163,6 +191,17 @@ void WebviewHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
     CEF_REQUIRE_UI_THREAD();
     this->browser_ = browser;
     this->browser_channel_->InvokeMethod("onBrowserCreated", nullptr);
+
+    // Create the browser-side router for query handling.
+    CefMessageRouterConfig config;
+    this->message_router_ = CefMessageRouterBrowserSide::Create(config);
+
+    // Register handlers with the router.
+    this->message_handler_.reset(new MessageHandler([this](const CefString& request) {
+        auto args = std::make_unique<flutter::EncodableValue>(flutter::EncodableValue(request.ToString()));
+        this->browser_channel_->InvokeMethod("onCefQuery", std::move(args));
+    }));
+    this->message_router_->AddHandler(message_handler_.get(), false);
 }
 
 bool WebviewHandler::DoClose(CefRefPtr<CefBrowser> browser) {
@@ -171,6 +210,11 @@ bool WebviewHandler::DoClose(CefRefPtr<CefBrowser> browser) {
     this->browser_channel_->SetMethodCallHandler(nullptr);
     this->browser_channel_ = nullptr;
     this->browser_ = nullptr;
+
+    this->message_router_->RemoveHandler(message_handler_.get());
+    this->message_handler_.reset();
+    this->message_router_ = nullptr;
+
     if (this->onBrowserClose) this->onBrowserClose();
     return false;
 }
@@ -183,7 +227,7 @@ bool WebviewHandler::OnBeforePopup(CefRefPtr<CefBrowser> browser,
                                   CefRefPtr<CefFrame> frame,
                                   const CefString& target_url,
                                   const CefString& target_frame_name,
-                                  WindowOpenDisposition target_disposition,
+                                  CefLifeSpanHandler::WindowOpenDisposition target_disposition,
                                   bool user_gesture,
                                   const CefPopupFeatures& popupFeatures,
                                   CefWindowInfo& windowInfo,
@@ -525,5 +569,23 @@ bool WebviewHandler::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
         return true;
     }
 
+    return this->message_router_->OnProcessMessageReceived(browser, frame, source_process, message);
+}
+
+void WebviewHandler::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser,
+                                       TerminationStatus status) {
+    CEF_REQUIRE_UI_THREAD();
+
+    this->message_router_->OnRenderProcessTerminated(browser);
+}
+
+bool WebviewHandler::OnBeforeBrowse(CefRefPtr<CefBrowser> browser,
+                                    CefRefPtr<CefFrame> frame,
+                                    CefRefPtr<CefRequest> request,
+                                    bool user_gesture,
+                                    bool is_redirect) {
+    CEF_REQUIRE_UI_THREAD();
+
+    this->message_router_->OnBeforeBrowse(browser, frame);
     return false;
 }

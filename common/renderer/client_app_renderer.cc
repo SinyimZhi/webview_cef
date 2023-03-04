@@ -25,7 +25,11 @@ CefString CefV8ValueToJSON(CefRefPtr<CefV8Context> v8_context, CefRefPtr<CefV8Va
 
 ClientAppRenderer::ClientAppRenderer() {}
 
-// void ClientAppRenderer::OnWebKitInitialized() {}
+void ClientAppRenderer::OnWebKitInitialized() {
+	// Create the renderer-side router for query handling.
+	CefMessageRouterConfig config;
+	message_router_ = CefMessageRouterRendererSide::Create(config);
+}
 
 // void ClientAppRenderer::OnBrowserCreated(CefRefPtr<CefBrowser> browser,
 //     									 CefRefPtr<CefDictionaryValue> extra_info) {}
@@ -34,13 +38,17 @@ ClientAppRenderer::ClientAppRenderer() {}
 
 // CefRefPtr<CefLoadHandler> ClientAppRenderer::GetLoadHandler() {}
 
-// void ClientAppRenderer::OnContextCreated(CefRefPtr<CefBrowser> browser,
-//                                          CefRefPtr<CefFrame> frame,
-//                                          CefRefPtr<CefV8Context> context) {}
+void ClientAppRenderer::OnContextCreated(CefRefPtr<CefBrowser> browser,
+                                         CefRefPtr<CefFrame> frame,
+                                         CefRefPtr<CefV8Context> context) {
+	message_router_->OnContextCreated(browser, frame, context);
+}
 
-// void ClientAppRenderer::OnContextReleased(CefRefPtr<CefBrowser> browser,
-//                                           CefRefPtr<CefFrame> frame,
-//                                           CefRefPtr<CefV8Context> context) {}
+void ClientAppRenderer::OnContextReleased(CefRefPtr<CefBrowser> browser,
+                         CefRefPtr<CefFrame> frame,
+                         CefRefPtr<CefV8Context> context) {
+	message_router_->OnContextReleased(browser, frame, context);
+}
 
 // void ClientAppRenderer::OnUncaughtException(CefRefPtr<CefBrowser> browser,
 // 											CefRefPtr<CefFrame> frame,
@@ -64,7 +72,8 @@ bool ClientAppRenderer::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
         return true;
     }
 
-  	return false;
+	return this->message_router_->OnProcessMessageReceived(browser, frame,
+            source_process, message);
 }
 
 

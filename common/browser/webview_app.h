@@ -40,6 +40,7 @@ private:
     std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> plugin_channel_;
     // Include the default reference counting implementation.
     IMPLEMENT_REFCOUNTING(WebviewApp);
+    DISALLOW_COPY_AND_ASSIGN(WebviewApp);
 };
 
 #endif  // COMMON_BROWSER_WEBVIEW_APP_H_

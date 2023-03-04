@@ -80,6 +80,9 @@ class WebViewController extends ValueNotifier<bool> {
         _creatingCompleter.complete();
         value = true;
         return null;
+      case 'onCefQuery':
+        _listener?.onCefQuery?.call(request: call.arguments);
+        return null;
     }
 
     return null;

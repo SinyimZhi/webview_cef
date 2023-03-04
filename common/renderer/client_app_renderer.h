@@ -9,6 +9,7 @@
 #include <set>
 
 #include "client_app.h"
+#include "include/wrapper/cef_message_router.h"
 
 // Client app implementation for the renderer process.
 class ClientAppRenderer : public ClientApp, public CefRenderProcessHandler {
@@ -22,17 +23,17 @@ private:
     }
 
     // CefRenderProcessHandler methods.
-    // void OnWebKitInitialized() override;
+    void OnWebKitInitialized() override;
     // void OnBrowserCreated(CefRefPtr<CefBrowser> browser,
     //                       CefRefPtr<CefDictionaryValue> extra_info) override;
     // void OnBrowserDestroyed(CefRefPtr<CefBrowser> browser) override;
     // CefRefPtr<CefLoadHandler> GetLoadHandler() override;
-    // void OnContextCreated(CefRefPtr<CefBrowser> browser,
-    //                       CefRefPtr<CefFrame> frame,
-    //                       CefRefPtr<CefV8Context> context) override;
-    // void OnContextReleased(CefRefPtr<CefBrowser> browser,
-    //                        CefRefPtr<CefFrame> frame,
-    //                        CefRefPtr<CefV8Context> context) override;
+    void OnContextCreated(CefRefPtr<CefBrowser> browser,
+                          CefRefPtr<CefFrame> frame,
+                          CefRefPtr<CefV8Context> context) override;
+    void OnContextReleased(CefRefPtr<CefBrowser> browser,
+                           CefRefPtr<CefFrame> frame,
+                           CefRefPtr<CefV8Context> context) override;
     // void OnUncaughtException(CefRefPtr<CefBrowser> browser,
     //                          CefRefPtr<CefFrame> frame,
     //                          CefRefPtr<CefV8Context> context,
@@ -47,6 +48,9 @@ private:
                                   CefRefPtr<CefProcessMessage> message) override;
 
 private:
+    // Handles the renderer side of query routing.
+    CefRefPtr<CefMessageRouterRendererSide> message_router_;
+
     void evaluateJavaScript(CefRefPtr<CefBrowser> browser,
 					   CefRefPtr<CefFrame> frame,
 					   CefProcessId source_process,

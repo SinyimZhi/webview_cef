@@ -7,6 +7,7 @@
 #pragma once
 
 #include "include/cef_client.h"
+#include "include/wrapper/cef_message_router.h"
 #include <flutter/method_channel.h>
 #include <flutter/standard_method_codec.h>
 #include <flutter/binary_messenger.h>
@@ -34,7 +35,8 @@ class WebviewHandler : public CefClient,
 public CefDisplayHandler,
 public CefLifeSpanHandler,
 public CefLoadHandler,
-public CefRenderHandler{
+public CefRenderHandler,
+public CefRequestHandler {
 public:
     std::function<void(const void*, int32_t width, int32_t height)> onPaintCallback;
     std::function<void()> onBrowserClose;
@@ -78,7 +80,7 @@ public:
                                CefRefPtr<CefFrame> frame,
                                const CefString& target_url,
                                const CefString& target_frame_name,
-                               WindowOpenDisposition target_disposition,
+                               CefLifeSpanHandler::WindowOpenDisposition target_disposition,
                                bool user_gesture,
                                const CefPopupFeatures& popupFeatures,
                                CefWindowInfo& windowInfo,
@@ -107,6 +109,15 @@ public:
                                               const CefRange& selection_range,
                                               const CefRenderHandler::RectList& character_bounds) override;
 
+
+    // CefRequestHandler methods:
+    bool OnBeforeBrowse(CefRefPtr<CefBrowser> browser,
+                        CefRefPtr<CefFrame> frame,
+                        CefRefPtr<CefRequest> request,
+                        bool user_gesture,
+                        bool is_redirect) override;
+    void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser,
+                                   TerminationStatus status) override;
 
     // Request that all existing browser windows close.
     void CloseAllBrowsers(bool force_close);
@@ -144,6 +155,10 @@ private:
     std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> browser_channel_;
     std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
     std::unique_ptr<flutter::EventChannel<flutter::EncodableValue>> event_channel_;
+
+    // Handles the browser side of query routing.
+    CefRefPtr<CefMessageRouterBrowserSide> message_router_;
+    std::unique_ptr<CefMessageRouterBrowserSide::Handler> message_handler_;
 
     void Focus();
     void Unfocus();
