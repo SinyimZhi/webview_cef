@@ -25,6 +25,7 @@ constexpr auto kEventValue = "value";
 constexpr auto kEventTitleChanged = "titleChanged";
 constexpr auto kEventURLChanged = "urlChanged";
 constexpr auto kEventCursorChanged = "cursorChanged";
+constexpr auto kEventScrollOffsetChanged = "scrollOffsetChanged";
 constexpr auto kEventAsyncChannelMessage = "asyncChannelMessage";
 
 constexpr auto kErrorInvalidArguments = "InvalidArguments";
@@ -105,6 +106,9 @@ public:
                                DragOperationsMask allowed_ops,
                                int x,
                                int y) override;
+    virtual void OnScrollOffsetChanged(CefRefPtr<CefBrowser> browser,
+                                       double x,
+                                       double y) override;
     virtual void OnImeCompositionRangeChanged(CefRefPtr<CefBrowser> browser,
                                               const CefRange& selection_range,
                                               const CefRenderHandler::RectList& character_bounds) override;

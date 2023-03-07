@@ -359,6 +359,15 @@ bool WebviewHandler::StartDragging(CefRefPtr<CefBrowser> browser,
     return true;
 }
 
+void WebviewHandler::OnScrollOffsetChanged(CefRefPtr<CefBrowser> browser,
+                                        double x,
+                                        double y) {
+    EmitEvent(kEventScrollOffsetChanged, flutter::EncodableMap{
+        {flutter::EncodableValue("x"), flutter::EncodableValue(x)},
+        {flutter::EncodableValue("y"), flutter::EncodableValue(y)},
+    });
+}
+
 void WebviewHandler::OnImeCompositionRangeChanged(CefRefPtr<CefBrowser> browser,
                                   const CefRange& selection_range,
                                   const CefRenderHandler::RectList& character_bounds) {

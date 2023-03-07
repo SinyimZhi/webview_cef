@@ -32,6 +32,7 @@ _startCEF() async {
 const _kEventTitleChanged = "titleChanged";
 const _kEventURLChanged = "urlChanged";
 const _kEventCursorChanged = "cursorChanged";
+const _kEventScrollOffsetChanged = "scrollOffsetChanged";
 const _kEventAsyncChannelMessage = 'asyncChannelMessage';
 
 class WebViewController extends ValueNotifier<bool> {
@@ -99,6 +100,10 @@ class WebViewController extends ValueNotifier<bool> {
         return;
       case _kEventCursorChanged:
         _cursorType.value = CursorType.values[m['value'] as int];
+        return;
+      case _kEventScrollOffsetChanged:
+        final offset = m['value'] as Map<dynamic, dynamic>;
+        _listener?.onScrollOffsetChanged?.call(offset['x'] as double, offset['y'] as double);
         return;
       case _kEventAsyncChannelMessage:
         _AsyncChannelMessageManager.handleChannelEvents(m['value']);
