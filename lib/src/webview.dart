@@ -33,6 +33,11 @@ const _kEventTitleChanged = "titleChanged";
 const _kEventURLChanged = "urlChanged";
 const _kEventCursorChanged = "cursorChanged";
 const _kEventScrollOffsetChanged = "scrollOffsetChanged";
+const _kEventLoadingProgressChanged = "loadingProgressChanged";
+const _kEventLoadingStateChanged = "loadingStateChanged";
+const _kEventLoadStart = "loadStart";
+const _kEventLoadEnd = "loadEnd";
+const _kEventLoadError = "loadError";
 const _kEventAsyncChannelMessage = 'asyncChannelMessage';
 
 class WebViewController extends ValueNotifier<bool> {
@@ -104,6 +109,26 @@ class WebViewController extends ValueNotifier<bool> {
       case _kEventScrollOffsetChanged:
         final offset = m['value'] as Map<dynamic, dynamic>;
         _listener?.onScrollOffsetChanged?.call(offset['x'] as double, offset['y'] as double);
+        return;
+      case _kEventLoadingProgressChanged:
+        _listener?.onLoadingProgressChanged?.call(m['value'] as double);
+        return;
+      case _kEventLoadingStateChanged:
+        _listener?.onLoadingStateChanged?.call(m['value'] as bool);
+        return;
+      case _kEventLoadStart:
+        _listener?.onLoadStart?.call(m['value'] as String);
+        return;
+      case _kEventLoadEnd:
+        _listener?.onLoadEnd?.call(m['value'] as int);
+        return;
+      case _kEventLoadError:
+        final data = m['value'] as Map<dynamic, dynamic>;
+        _listener?.onLoadError?.call(
+          data['errorCode'] as int,
+          data['errorText'] as String,
+          data['failedUrl'] as String,
+        );
         return;
       case _kEventAsyncChannelMessage:
         _AsyncChannelMessageManager.handleChannelEvents(m['value']);

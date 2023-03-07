@@ -25,7 +25,12 @@ constexpr auto kEventValue = "value";
 constexpr auto kEventTitleChanged = "titleChanged";
 constexpr auto kEventURLChanged = "urlChanged";
 constexpr auto kEventCursorChanged = "cursorChanged";
+constexpr auto kEventLoadingProgressChanged = "loadingProgressChanged";
 constexpr auto kEventScrollOffsetChanged = "scrollOffsetChanged";
+constexpr auto kEventLoadingStateChanged = "loadingStateChanged";
+constexpr auto kEventLoadStart = "loadStart";
+constexpr auto kEventLoadEnd = "loadEnd";
+constexpr auto kEventLoadError = "loadError";
 constexpr auto kEventAsyncChannelMessage = "asyncChannelMessage";
 
 constexpr auto kErrorInvalidArguments = "InvalidArguments";
@@ -61,7 +66,7 @@ public:
                                           CefRefPtr<CefFrame> frame,
                                           CefProcessId source_process,
                                           CefRefPtr<CefProcessMessage> message) override;
-    
+
     // CefDisplayHandler methods:
     virtual void OnTitleChange(CefRefPtr<CefBrowser> browser,
                                const CefString& title) override;
@@ -72,6 +77,20 @@ public:
                                 CefCursorHandle cursor,
                                 cef_cursor_type_t type,
                                 const CefCursorInfo& custom_cursor_info) override;
+    virtual void OnLoadingProgressChange(CefRefPtr<CefBrowser> browser,
+                                       double progress) override;
+
+    virtual void OnLoadingStateChange(CefRefPtr<CefBrowser> browser,
+                                      bool isLoading,
+                                      bool canGoBack,
+                                      bool canGoForward) override;
+    virtual void OnLoadStart(CefRefPtr<CefBrowser> browser,
+                             CefRefPtr<CefFrame> frame,
+                             TransitionType transition_type) override;
+
+    virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,
+                           CefRefPtr<CefFrame> frame,
+                           int httpStatusCode) override;
 
     // CefLifeSpanHandler methods:
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;

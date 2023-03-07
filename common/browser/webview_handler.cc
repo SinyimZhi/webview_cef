@@ -187,6 +187,34 @@ bool WebviewHandler::OnCursorChange(CefRefPtr<CefBrowser> browser,
     return false;
 }
 
+void WebviewHandler::OnLoadingProgressChange(CefRefPtr<CefBrowser> browser,
+                                            double progress) {
+    EmitEvent(kEventLoadingProgressChanged, progress);
+}
+
+void WebviewHandler::OnLoadingStateChange(CefRefPtr<CefBrowser> browser,
+                                          bool isLoading,
+                                          bool canGoBack,
+                                          bool canGoForward) {
+    EmitEvent(kEventLoadingStateChanged, isLoading);
+}
+
+void WebviewHandler::OnLoadStart(CefRefPtr<CefBrowser> browser,
+                            CefRefPtr<CefFrame> frame,
+                            TransitionType transition_type) {
+    if (frame->IsMain()) {
+        EmitEvent(kEventLoadStart, frame->GetURL().ToString());
+    }
+}
+
+void WebviewHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser,
+                        CefRefPtr<CefFrame> frame,
+                        int httpStatusCode) {
+    if (frame->IsMain()) {
+        EmitEvent(kEventLoadEnd, static_cast<int32_t>(httpStatusCode));
+    }
+}
+
 void WebviewHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
     CEF_REQUIRE_UI_THREAD();
     this->browser_ = browser;
@@ -253,15 +281,14 @@ void WebviewHandler::OnLoadError(CefRefPtr<CefBrowser> browser,
     // Don't display an error for downloaded files.
     if (errorCode == ERR_ABORTED)
         return;
-    
-    // Display a load error message using a data: URI.
-    std::stringstream ss;
-    ss << "<html><body bgcolor=\"white\">"
-    "<h2>Failed to load URL "
-    << std::string(failedUrl) << " with error " << std::string(errorText)
-    << " (" << errorCode << ").</h2></body></html>";
-    
-    frame->LoadURL(GetDataURI(ss.str(), "text/html"));
+
+    if (frame->IsMain()) {
+        EmitEvent(kEventLoadError, flutter::EncodableMap{
+            {flutter::EncodableValue("errorCode"), flutter::EncodableValue(static_cast<int32_t>(errorCode))},
+            {flutter::EncodableValue("errorText"), flutter::EncodableValue(errorText.ToString())},
+            {flutter::EncodableValue("failedUrl"), flutter::EncodableValue(failedUrl.ToString())},
+        });
+    }
 }
 
 void WebviewHandler::CloseAllBrowsers(bool force_close) {
