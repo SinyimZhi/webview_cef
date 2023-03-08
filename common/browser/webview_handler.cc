@@ -94,7 +94,6 @@ public:
 				 bool persistent,
 				 CefRefPtr<Callback> callback) override {
 
-		std::cout << "MessageHandler::OnQuery::request = " << request << std::endl;
         if (this->onQueryCallback_) this->onQueryCallback_(request);
 		callback->Success("");
 		return true;
@@ -419,6 +418,11 @@ void WebviewHandler::sendKeyEvent(CefKeyEvent ev)
 void WebviewHandler::loadUrl(std::string url)
 {
     this->browser_->GetMainFrame()->LoadURL(url);
+}
+
+std::string WebviewHandler::getUrl()
+{
+    return this->browser_->GetMainFrame()->GetURL();
 }
 
 bool WebviewHandler::canGoForward() {

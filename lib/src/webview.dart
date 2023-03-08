@@ -162,6 +162,14 @@ class WebViewController extends ValueNotifier<bool> {
     return _broswerChannel.invokeMethod('loadUrl', url);
   }
 
+  Future<String?> getUrl() async {
+    if (_isDisposed) {
+      return null;
+    }
+    assert(value);
+    return _broswerChannel.invokeMethod('getUrl');
+  }
+
   Future<void> stopLoad() async {
     if (_isDisposed) {
       return;

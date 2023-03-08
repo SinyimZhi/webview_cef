@@ -155,6 +155,7 @@ public:
     void cursorMove(int x, int y, bool dragging);
     void sendKeyEvent(CefKeyEvent ev);
     void loadUrl(std::string url);
+    std::string getUrl();
     bool canGoForward();
     void goForward();
     bool canGoBack();
