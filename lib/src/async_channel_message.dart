@@ -36,7 +36,12 @@ class _AsyncChannelMessageManager {
         message._completer.completeError(errorMsg);
       }
     } else {
-      message._completer.complete(m[_keyResult]);
+      final data = m[_keyResult] as String;
+      if (data.isEmpty) {
+        message._completer.complete();
+      } else {
+        message._completer.complete(jsonDecode(data));
+      }
     }
   }
 
