@@ -167,12 +167,14 @@ void WebviewHandler::Unfocus() {
 }
 
 void WebviewHandler::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) {
+    if (browser->IsPopup()) return;
     EmitEvent(kEventTitleChanged, title.ToString());
 }
 
 void WebviewHandler::OnAddressChange(CefRefPtr<CefBrowser> browser,
                                     CefRefPtr<CefFrame> frame,
                                     const CefString& url) {
+    if (browser->IsPopup()) return;
     if (frame->IsMain()) {
         EmitEvent(kEventURLChanged, url.ToString());
     }
@@ -181,13 +183,16 @@ void WebviewHandler::OnAddressChange(CefRefPtr<CefBrowser> browser,
 bool WebviewHandler::OnCursorChange(CefRefPtr<CefBrowser> browser,
                                 CefCursorHandle cursor,
                                 cef_cursor_type_t type,
-                                const CefCursorInfo& custom_cursor_info) {
+                                const CefCursorInfo& custom_cursor_info) {\
+    if (browser->IsPopup()) return false;
+
     EmitEvent(kEventCursorChanged, static_cast<int32_t>(type));
     return false;
 }
 
 void WebviewHandler::OnLoadingProgressChange(CefRefPtr<CefBrowser> browser,
                                             double progress) {
+    if (browser->IsPopup()) return;
     EmitEvent(kEventLoadingProgressChanged, progress);
 }
 
@@ -195,12 +200,14 @@ void WebviewHandler::OnLoadingStateChange(CefRefPtr<CefBrowser> browser,
                                           bool isLoading,
                                           bool canGoBack,
                                           bool canGoForward) {
+    if (browser->IsPopup()) return;
     EmitEvent(kEventLoadingStateChanged, isLoading);
 }
 
 void WebviewHandler::OnLoadStart(CefRefPtr<CefBrowser> browser,
                             CefRefPtr<CefFrame> frame,
                             TransitionType transition_type) {
+    if (browser->IsPopup()) return;
     if (frame->IsMain()) {
         EmitEvent(kEventLoadStart, frame->GetURL().ToString());
     }
@@ -209,6 +216,7 @@ void WebviewHandler::OnLoadStart(CefRefPtr<CefBrowser> browser,
 void WebviewHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser,
                         CefRefPtr<CefFrame> frame,
                         int httpStatusCode) {
+    if (browser->IsPopup()) return;
     if (frame->IsMain()) {
         EmitEvent(kEventLoadEnd, static_cast<int32_t>(httpStatusCode));
     }
@@ -216,6 +224,9 @@ void WebviewHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser,
 
 void WebviewHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
     CEF_REQUIRE_UI_THREAD();
+
+    if (browser->IsPopup()) return;
+
     this->browser_ = browser;
     this->browser_channel_->InvokeMethod("onBrowserCreated", nullptr);
 
@@ -234,6 +245,10 @@ void WebviewHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
 bool WebviewHandler::DoClose(CefRefPtr<CefBrowser> browser) {
     CEF_REQUIRE_UI_THREAD();
 
+    if (browser->IsPopup()) {
+        return false;
+    }
+
     this->browser_channel_->SetMethodCallHandler(nullptr);
     this->browser_channel_ = nullptr;
     this->browser_ = nullptr;
@@ -250,21 +265,20 @@ void WebviewHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
     // CEF_REQUIRE_UI_THREAD();
 }
 
-bool WebviewHandler::OnBeforePopup(CefRefPtr<CefBrowser> browser,
-                                  CefRefPtr<CefFrame> frame,
-                                  const CefString& target_url,
-                                  const CefString& target_frame_name,
-                                  CefLifeSpanHandler::WindowOpenDisposition target_disposition,
-                                  bool user_gesture,
-                                  const CefPopupFeatures& popupFeatures,
-                                  CefWindowInfo& windowInfo,
-                                  CefRefPtr<CefClient>& client,
-                                  CefBrowserSettings& settings,
-                                  CefRefPtr<CefDictionaryValue>& extra_info,
-                                  bool* no_javascript_access) {
-    loadUrl(target_url);
-    return true;
-}
+// bool WebviewHandler::OnBeforePopup(CefRefPtr<CefBrowser> browser,
+//                                   CefRefPtr<CefFrame> frame,
+//                                   const CefString& target_url,
+//                                   const CefString& target_frame_name,
+//                                   CefLifeSpanHandler::WindowOpenDisposition target_disposition,
+//                                   bool user_gesture,
+//                                   const CefPopupFeatures& popupFeatures,
+//                                   CefWindowInfo& windowInfo,
+//                                   CefRefPtr<CefClient>& client,
+//                                   CefBrowserSettings& settings,
+//                                   CefRefPtr<CefDictionaryValue>& extra_info,
+//                                   bool* no_javascript_access) {
+//     return true;
+// }
 
 void WebviewHandler::OnLoadError(CefRefPtr<CefBrowser> browser,
                                 CefRefPtr<CefFrame> frame,
@@ -272,7 +286,7 @@ void WebviewHandler::OnLoadError(CefRefPtr<CefBrowser> browser,
                                 const CefString& errorText,
                                 const CefString& failedUrl) {
     CEF_REQUIRE_UI_THREAD();
-    
+
     // Allow Chrome to show the error page.
     if (IsChromeRuntimeEnabled())
         return;
@@ -320,11 +334,8 @@ void WebviewHandler::sendScrollEvent(int x, int y, int deltaX, int deltaY) {
 #ifndef __APPLE__
     // The scrolling direction on Windows and Linux is different from MacOS
     deltaY = -deltaY;
-    // Flutter scrolls too slowly, it looks more normal by 10x default speed.
-    this->browser_->GetHost()->SendMouseWheelEvent(ev, deltaX * 10, deltaY * 10);
-#else
-    this->browser_->GetHost()->SendMouseWheelEvent(ev, deltaX, deltaY);
 #endif
+    this->browser_->GetHost()->SendMouseWheelEvent(ev, deltaX, deltaY);
 }
 
 void WebviewHandler::changeSize(float a_dpi, int w, int h)
