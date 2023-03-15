@@ -6,11 +6,11 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 
 part 'webview_cursor.dart';
 part 'webview_events_listener.dart';
 part 'async_channel_message.dart';
+part 'text_input.dart';
 
 const MethodChannel _pluginChannel = MethodChannel("webview_cef");
 bool _hasCallStartCEF = false;
@@ -306,7 +306,7 @@ class WebView extends StatefulWidget {
   WebViewState createState() => WebViewState();
 }
 
-class WebViewState extends State<WebView> {
+class WebViewState extends State<WebView> with _WebViewTextInput {
   final GlobalKey _key = GlobalKey();
   final _focusNode = FocusNode();
 
@@ -322,6 +322,7 @@ class WebViewState extends State<WebView> {
 
   @override
   void dispose() {
+    detachTextInputClient();
     _focusNode.dispose();
     super.dispose();
   }
@@ -339,10 +340,12 @@ class WebViewState extends State<WebView> {
       },
       child: SizeChangedLayoutNotifier(
         child: Focus(
+          debugLabel: 'webview cef',
           focusNode: _focusNode,
           autofocus: false,
           onFocusChange: (focused) {
-            if (!focused) _controller._unfocus();
+            // print('webview onFocusChange chagned to: ${FocusScope.of(context).focusedChild?.toString()}');
+            // if (!focused) _controller._unfocus();
           },
           child: Listener(
             onPointerHover: (ev) {
@@ -353,9 +356,10 @@ class WebViewState extends State<WebView> {
 
               // Fixes for getting focus immediately.
               if (!_focusNode.hasFocus) {
-                _focusNode.unfocus();
-                await Future<void>.delayed(const Duration(milliseconds: 1));
+                // _focusNode.unfocus();
+                // await Future<void>.delayed(const Duration(milliseconds: 1));
                 if (mounted) FocusScope.of(context).requestFocus(_focusNode);
+                attachTextInputClient();
               }
             },
             onPointerUp: (ev) {

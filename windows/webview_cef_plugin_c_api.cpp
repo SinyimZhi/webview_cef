@@ -6,7 +6,6 @@
 #include "renderer/client_app_renderer.h"
 #include "webview_cef_plugin.h"
 #include "include/cef_app.h"
-#include "osr_ime_handler_win.h"
 
 void WebviewCefPluginCApiRegisterWithRegistrar(
 	FlutterDesktopPluginRegistrarRef registrar) {
@@ -116,25 +115,18 @@ FLUTTER_PLUGIN_EXPORT int InitCEFProcesses() {
 	return CefExecuteProcess(mainArgs, app, nullptr);
 }
 
-FLUTTER_PLUGIN_EXPORT void InitCEFIMEHandler(const HWND hwnd) {
-	DCHECK(hwnd);
-	DCHECK(!webview_cef::ime_handler);
-
-	webview_cef::ime_handler.reset(new webview_cef::OsrImeHandlerWin(hwnd));
-}
-
 FLUTTER_PLUGIN_EXPORT void ProcessMessageForCEF(unsigned int message, unsigned __int64 wParam, __int64 lParam) {
 	switch (message) {
     case WM_IME_SETCONTEXT:
     	return;
     case WM_IME_STARTCOMPOSITION:
-	  	webview_cef::OnIMEStartComposition();
+		webview_cef::composingText = true;
     	return;
     case WM_IME_COMPOSITION:
-		webview_cef::OnIMEComposition(message, wParam, lParam);
+		webview_cef::composingText = true;
     	return;
     case WM_IME_ENDCOMPOSITION:
-		webview_cef::OnIMECancelCompositionEvent();
+		webview_cef::composingText = false;
     	return;
 	case WM_SYSCHAR:
     case WM_SYSKEYDOWN:
@@ -142,7 +134,9 @@ FLUTTER_PLUGIN_EXPORT void ProcessMessageForCEF(unsigned int message, unsigned _
     case WM_KEYDOWN:
     case WM_KEYUP:
     case WM_CHAR:
-		processKeyEventForCEF(message, wParam, lParam);
+		if (!webview_cef::composingText) {
+			processKeyEventForCEF(message, wParam, lParam);
+		}
 		return;
     }
 }

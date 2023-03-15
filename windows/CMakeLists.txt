@@ -25,8 +25,6 @@ list(APPEND PLUGIN_SOURCES
   "webview_cef_plugin.h"
   "texture_handler.cc"
   "texture_handler.h"
-  "osr_ime_handler_win.cc"
-  "osr_ime_handler_win.h"
   "${CMAKE_CURRENT_LIST_DIR}/../common/message.h"
   "${CMAKE_CURRENT_LIST_DIR}/../common/message.cc"
   "${CMAKE_CURRENT_LIST_DIR}/../common/client_app.cc"

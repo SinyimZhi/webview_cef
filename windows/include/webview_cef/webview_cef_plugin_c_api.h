@@ -19,8 +19,6 @@ FLUTTER_PLUGIN_EXPORT void WebviewCefPluginCApiRegisterWithRegistrar(
 
 FLUTTER_PLUGIN_EXPORT int InitCEFProcesses();
 
-FLUTTER_PLUGIN_EXPORT void InitCEFIMEHandler(const HWND hwnd);
-
 FLUTTER_PLUGIN_EXPORT void ProcessMessageForCEF(unsigned int message, unsigned __int64 wParam, __int64 lParam);
 
 void processKeyEventForCEF(unsigned int message, unsigned __int64 wParam, __int64 lParam);

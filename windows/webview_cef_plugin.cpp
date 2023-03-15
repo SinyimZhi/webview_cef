@@ -11,67 +11,17 @@
 #include "browser/webview_app.h"
 #include "texture_handler.h"
 
+#define ColorUNDERLINE \
+  0xFF000000  // Black SkColor value for underline,
+              // same as Blink.
+#define ColorBKCOLOR \
+  0x00000000  // White SkColor value for background,
+              // same as Blink.
+
 namespace webview_cef {
 	bool init = false;
 
-	std::unique_ptr<OsrImeHandlerWin> ime_handler = nullptr;
-
-	void OnIMEStartComposition() {
-		if (ime_handler) {
-			ime_handler->CreateImeWindow();
-			ime_handler->MoveImeWindow();
-			ime_handler->ResetComposition();
-		}
-	}
-
-	void OnIMEComposition(UINT message,
-                                    WPARAM wParam,
-                                    LPARAM lParam) {
-		auto browser = WebviewHandler::CurrentFocusedBrowser();
-		if (browser && ime_handler) {
-			CefString cTextStr;
-			if (ime_handler->GetResult(lParam, cTextStr)) {
-				// Send the text to the browser. The |replacement_range| and
-				// |relative_cursor_pos| params are not used on Windows, so provide
-				// default invalid values.
-				browser->GetHost()->ImeCommitText(cTextStr,
-													CefRange(UINT32_MAX, UINT32_MAX), 0);
-				ime_handler->ResetComposition();
-				// Continue reading the composition string - Japanese IMEs send both
-				// GCS_RESULTSTR and GCS_COMPSTR.
-			}
-
-			std::vector<CefCompositionUnderline> underlines;
-			int composition_start = 0;
-
-			if (ime_handler->GetComposition(lParam, cTextStr, underlines,
-											composition_start)) {
-				// Send the composition string to the browser. The |replacement_range|
-				// param is not used on Windows, so provide a default invalid value.
-				browser->GetHost()->ImeSetComposition(
-					cTextStr, underlines, CefRange(UINT32_MAX, UINT32_MAX),
-					CefRange(composition_start,
-							static_cast<int>(composition_start + cTextStr.length())));
-
-				// Update the Candidate Window position. The cursor is at the end so
-				// subtract 1. This is safe because IMM32 does not support non-zero-width
-				// in a composition. Also,  negative values are safely ignored in
-				// MoveImeWindow
-				ime_handler->UpdateCaretPosition(composition_start - 1);
-			} else {
-				OnIMECancelCompositionEvent();
-			}
-		}
-	}
-
-	void OnIMECancelCompositionEvent() {
-		auto browser = WebviewHandler::CurrentFocusedBrowser();
-		if (browser && ime_handler) {
-			browser->GetHost()->ImeCancelComposition();
-			ime_handler->ResetComposition();
-			ime_handler->DestroyImeWindow();
-		}
-	}
+	bool composingText = false;
 
 	flutter::TextureRegistrar* texture_registrar;
 	flutter::BinaryMessenger* messenger;
@@ -153,17 +103,56 @@ namespace webview_cef {
 			handler->onBrowserClose = [texture_handler] () mutable {
 				delete texture_handler;
 			};
-			handler->onImeCompositionRangeChangedCallback = [] (CefRefPtr<CefBrowser> browser,
-														const CefRange& selection_range,
-														const CefRenderHandler::RectList& character_bounds) {
-				if (ime_handler)
-					ime_handler->ChangeCompositionRange(selection_range, character_bounds);
-			};
 
 			app->CreateBrowser(handler);
 			result->Success(flutter::EncodableValue(texture_handler->texture_id()));
-		}
-		else {
+		} else if (method_call.method_name().compare("imeSetComposition") == 0) {
+			auto browser = WebviewHandler::CurrentFocusedBrowser();
+			if (browser) {
+				const auto text = *std::get_if<std::string>(method_call.arguments());
+				CefString cTextStr = CefString(text);
+
+				std::vector<CefCompositionUnderline> underlines;
+				cef_composition_underline_t underline = {};
+				underline.range.from = 0;
+				underline.range.to = static_cast<int>(0 + cTextStr.length());
+				underline.color = ColorUNDERLINE;
+				underline.background_color = ColorBKCOLOR;
+				underline.thick = 0;
+				underline.style = CEF_CUS_DOT;
+				underlines.push_back(underline);
+
+				// Keeps the caret at the end of the composition
+				auto selection_range_end = static_cast<int>(0 + cTextStr.length());
+				CefRange selection_range = CefRange(selection_range_end, selection_range_end);
+				browser->GetHost()->ImeSetComposition(cTextStr, underlines, CefRange(UINT32_MAX, UINT32_MAX), selection_range);
+			}
+			result->Success();
+		} else if (method_call.method_name().compare("imeCommitText") == 0) {
+			auto browser = WebviewHandler::CurrentFocusedBrowser();
+			if (browser) {
+				const auto text = *std::get_if<std::string>(method_call.arguments());
+				CefString cTextStr = CefString(text);
+				// Send the text to the browser. The |replacement_range| and
+				// |relative_cursor_pos| params are not used on Windows, so provide
+				// default invalid values.
+				browser->GetHost()->ImeCommitText(cTextStr,
+												  CefRange(UINT32_MAX, UINT32_MAX), 0);
+			}
+			result->Success();
+		} else if (method_call.method_name().compare("imeFinishComposingText") == 0) {
+			auto browser = WebviewHandler::CurrentFocusedBrowser();
+			if (browser) {
+				browser->GetHost()->ImeFinishComposingText(false);
+			}
+			result->Success();
+		} else if (method_call.method_name().compare("imeCancelComposition") == 0) {
+			auto browser = WebviewHandler::CurrentFocusedBrowser();
+			if (browser) {
+				browser->GetHost()->ImeCancelComposition();
+			}
+			result->Success();
+		} else {
 			result->NotImplemented();
 		}
 	}
