@@ -183,7 +183,7 @@ void WebviewHandler::OnAddressChange(CefRefPtr<CefBrowser> browser,
 bool WebviewHandler::OnCursorChange(CefRefPtr<CefBrowser> browser,
                                 CefCursorHandle cursor,
                                 cef_cursor_type_t type,
-                                const CefCursorInfo& custom_cursor_info) {\
+                                const CefCursorInfo& custom_cursor_info) {
     if (browser->IsPopup()) return false;
 
     EmitEvent(kEventCursorChanged, static_cast<int32_t>(type));
@@ -488,7 +488,7 @@ void WebviewHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect) {
 bool WebviewHandler::GetScreenInfo(CefRefPtr<CefBrowser> browser, CefScreenInfo& screen_info) {
     //todo: hi dpi support
     screen_info.device_scale_factor  = this->dpi_;
-    return false;
+    return true;
 }
 
 void WebviewHandler::OnPaint(CefRefPtr<CefBrowser> browser, CefRenderHandler::PaintElementType type,
