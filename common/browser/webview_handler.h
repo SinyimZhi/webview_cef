@@ -31,6 +31,7 @@ constexpr auto kEventLoadingStateChanged = "loadingStateChanged";
 constexpr auto kEventLoadStart = "loadStart";
 constexpr auto kEventLoadEnd = "loadEnd";
 constexpr auto kEventLoadError = "loadError";
+constexpr auto kEventIMEComposionPositionChanged = "imeComposionPositionChanged";
 constexpr auto kEventAsyncChannelMessage = "asyncChannelMessage";
 
 constexpr auto kErrorInvalidArguments = "InvalidArguments";
@@ -174,6 +175,7 @@ private:
     float dpi_ = 1.0;
     bool is_dragging_ = false;
     bool is_focused_ = false;
+    CefRect _prevIMEPosition = CefRect();
 
     CefRefPtr<CefBrowser> browser_;
     std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> browser_channel_;

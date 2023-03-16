@@ -409,16 +409,17 @@ void WebviewHandler::OnImeCompositionRangeChanged(CefRefPtr<CefBrowser> browser,
                                   const CefRange& selection_range,
                                   const CefRenderHandler::RectList& character_bounds) {
     CEF_REQUIRE_UI_THREAD();
-    if (!this->onImeCompositionRangeChangedCallback)
-        return;
 
-    // Convert from view coordinates to application window coordinates.
-    CefRenderHandler::RectList app_view_bounds;
-    CefRenderHandler::RectList::const_iterator it = character_bounds.begin();
-    for (; it != character_bounds.end(); ++it) {
-        app_view_bounds.push_back(LogicalToDevice(*it, this->dpi_, this->x_, this->y_));
+    if (!character_bounds.empty()) {
+        auto firstCharacter = character_bounds.front();
+        if (firstCharacter != _prevIMEPosition) {
+            _prevIMEPosition = firstCharacter;
+            EmitEvent(kEventIMEComposionPositionChanged, flutter::EncodableMap{
+                {flutter::EncodableValue("x"), flutter::EncodableValue(static_cast<int32_t>(firstCharacter.x))},
+                {flutter::EncodableValue("y"), flutter::EncodableValue(static_cast<int32_t>(firstCharacter.y + firstCharacter.height))},
+            });
+        }
     }
-    this->onImeCompositionRangeChangedCallback(browser, selection_range, app_view_bounds);
 }
 
 void WebviewHandler::sendKeyEvent(CefKeyEvent ev)

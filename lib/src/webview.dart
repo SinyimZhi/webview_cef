@@ -39,6 +39,7 @@ const _kEventLoadingStateChanged = "loadingStateChanged";
 const _kEventLoadStart = "loadStart";
 const _kEventLoadEnd = "loadEnd";
 const _kEventLoadError = "loadError";
+const _kIMEComposionPositionChanged = "imeComposionPositionChanged";
 const _kEventAsyncChannelMessage = 'asyncChannelMessage';
 
 class WebViewController extends ValueNotifier<bool> {
@@ -131,12 +132,18 @@ class WebViewController extends ValueNotifier<bool> {
           data['failedUrl'] as String,
         );
         return;
+      case _kIMEComposionPositionChanged:
+        final pos = m['value'] as Map<dynamic, dynamic>;
+        _onIMEComposionPositionChanged?.call((pos['x'] as int).toDouble(), (pos['y'] as int).toDouble());
+        return;
       case _kEventAsyncChannelMessage:
         _AsyncChannelMessageManager.handleChannelEvents(m['value']);
         return;
       default:
     }
   }
+
+  Function(double, double)? _onIMEComposionPositionChanged;
 
   setWebviewListener(WebviewEventsListener listener) {
     _listener = listener;
@@ -318,6 +325,11 @@ class WebViewState extends State<WebView> with _WebViewTextInput {
     // Report initial surface size
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _reportSurfaceSize(context));
+  
+    _controller._onIMEComposionPositionChanged = (x, y) {
+      final box = _key.currentContext!.findRenderObject() as RenderBox;
+      updateIMEComposionPosition(x, y, box.localToGlobal(Offset.zero));
+    };
   }
 
   @override

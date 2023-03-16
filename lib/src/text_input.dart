@@ -20,6 +20,12 @@ mixin _WebViewTextInput implements DeltaTextInputClient {
     _textInputConnection?.close();
   }
 
+  updateIMEComposionPosition(double x, double y, Offset offset) {
+    /// It always displays at the last position, which should be a bug in the Flutter engine.
+    _textInputConnection?.setEditableSizeAndTransform(const Size(0, 0),
+        Matrix4.translationValues(offset.dx + x, offset.dy + y, 0));
+  }
+
   @override
   updateEditingValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
     /// Handles IME composition only
