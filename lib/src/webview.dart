@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 part 'webview_cursor.dart';
-part 'webview_events_listener.dart';
 part 'async_channel_message.dart';
 part 'text_input.dart';
 part 'webview_controller.dart';

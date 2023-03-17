@@ -1,5 +1,15 @@
 part of webview;
 
+typedef TitleChangeCallback = void Function(String title);
+typedef UrlChangeCallback = void Function(String url);
+typedef CefQueryCallback = void Function({String? request});
+typedef ScrollOffsetChangedCallback = void Function(double x, double y);
+typedef LoadingProgressChangedCallback = void Function(double v);
+typedef LoadingStateChangedCallback = void Function(bool isLoading);
+typedef LoadStartCallback = void Function(String url);
+typedef LoadEndCallback = void Function(int statusCode);
+typedef LoadErrorCallback = void Function(int code, String text, String url);
+
 const MethodChannel _pluginChannel = MethodChannel("webview_cef");
 bool _hasCallStartCEF = false;
 final _cefStarted = Completer();
@@ -37,7 +47,6 @@ class WebViewController extends ValueNotifier<bool> {
   late final int _browserID;
   int _textureId = 0;
   bool _isDisposed = false;
-  WebviewEventsListener? _listener;
   late final MethodChannel _broswerChannel;
   late final EventChannel _eventChannel;
   StreamSubscription? _eventStreamSubscription;
@@ -46,6 +55,26 @@ class WebViewController extends ValueNotifier<bool> {
 
   final bool headless;
   Future<void> get ready => _creatingCompleter.future;
+
+  TitleChangeCallback? onTitleChanged;
+  UrlChangeCallback? onUrlChanged;
+  ScrollOffsetChangedCallback? onScrollOffsetChanged;
+
+  /// Called when the overall page loading progress has changed.
+  /// progress ranges from 0.0 to 1.0.
+  LoadingProgressChangedCallback? onLoadingProgressChanged;
+
+  /// Called when the loading state has changed. This callback will be executed
+  /// twice -- once when loading is initiated either programmatically or by user
+  /// action, and once when loading is terminated due to completion, cancellation
+  /// of failure. It will be called before any calls to OnLoadStart and after all
+  /// calls to OnLoadError and/or OnLoadEnd.
+  LoadingStateChangedCallback? onLoadingStateChanged;
+
+  LoadStartCallback? onLoadStart;
+  LoadEndCallback? onLoadEnd;
+  LoadErrorCallback? onLoadError;
+  CefQueryCallback? onCefQuery;
 
   WebViewController({
     this.headless = false,
@@ -81,7 +110,7 @@ class WebViewController extends ValueNotifier<bool> {
         value = true;
         return null;
       case 'onCefQuery':
-        _listener?.onCefQuery?.call(request: call.arguments);
+        onCefQuery?.call(request: call.arguments);
         return null;
     }
 
@@ -92,33 +121,33 @@ class WebViewController extends ValueNotifier<bool> {
     final m = event as Map<dynamic, dynamic>;
     switch (m['type']) {
       case _kEventURLChanged:
-        _listener?.onUrlChanged?.call(m['value'] as String);
+        onUrlChanged?.call(m['value'] as String);
         return;
       case _kEventTitleChanged:
-        _listener?.onTitleChanged?.call(m['value'] as String);
+        onTitleChanged?.call(m['value'] as String);
         return;
       case _kEventCursorChanged:
         _cursorType.value = CursorType.values[m['value'] as int];
         return;
       case _kEventScrollOffsetChanged:
         final offset = m['value'] as Map<dynamic, dynamic>;
-        _listener?.onScrollOffsetChanged?.call(offset['x'] as double, offset['y'] as double);
+        onScrollOffsetChanged?.call(offset['x'] as double, offset['y'] as double);
         return;
       case _kEventLoadingProgressChanged:
-        _listener?.onLoadingProgressChanged?.call(m['value'] as double);
+        onLoadingProgressChanged?.call(m['value'] as double);
         return;
       case _kEventLoadingStateChanged:
-        _listener?.onLoadingStateChanged?.call(m['value'] as bool);
+        onLoadingStateChanged?.call(m['value'] as bool);
         return;
       case _kEventLoadStart:
-        _listener?.onLoadStart?.call(m['value'] as String);
+        onLoadStart?.call(m['value'] as String);
         return;
       case _kEventLoadEnd:
-        _listener?.onLoadEnd?.call(m['value'] as int);
+        onLoadEnd?.call(m['value'] as int);
         return;
       case _kEventLoadError:
         final data = m['value'] as Map<dynamic, dynamic>;
-        _listener?.onLoadError?.call(
+        onLoadError?.call(
           data['errorCode'] as int,
           data['errorText'] as String,
           data['failedUrl'] as String,
@@ -136,10 +165,6 @@ class WebViewController extends ValueNotifier<bool> {
   }
 
   Function(double, double)? _onIMEComposionPositionChanged;
-
-  setWebviewListener(WebviewEventsListener listener) {
-    _listener = listener;
-  }
 
   @override
   Future<void> dispose() async {

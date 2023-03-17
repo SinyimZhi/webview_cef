@@ -133,12 +133,8 @@ class _BrowserViewState extends State<BrowserView> with AutomaticKeepAliveClient
   Future<void> initPlatformState() async {
     _textController.text = 'https://flutter.dev';
 
-    _controller.setWebviewListener(WebviewEventsListener(
-      onTitleChanged: widget.onTitleChanged,
-      onUrlChanged: (url) {
-        _textController.text = url;
-      },
-    ));
+    _controller.onTitleChanged = widget.onTitleChanged;
+    _controller.onUrlChanged = (url) => _textController.text = url;
 
     await _controller.initialize();
     await _controller.loadUrl(_textController.text);
