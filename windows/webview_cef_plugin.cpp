@@ -42,11 +42,10 @@ namespace webview_cef {
 	}
 
 	template <typename T>
-	std::optional<T> GetOptionalValue(const flutter::EncodableMap& map,
-		const std::string& key) {
+	std::optional<T> GetOptionalValue(const flutter::EncodableMap& map, const char* key) {
 		const auto it = map.find(flutter::EncodableValue(key));
 		if (it != map.end()) {
-			const auto val = std::get_if<T>(&it->second);
+			const auto val = std::get_if<T>(&(it->second));
 			if (val) {
 				return *val;
 			}
@@ -94,18 +93,35 @@ namespace webview_cef {
 			}
 			result->Success();
 		} else if (method_call.method_name().compare("createBrowser") == 0) {
-			auto const browser_id = *std::get_if<int>(method_call.arguments());
-			auto handler = new WebviewHandler(messenger, browser_id);
-			auto texture_handler = new TextureHandler(texture_registrar);
-			handler->onPaintCallback = [texture_handler](const void* buffer, int32_t width, int32_t height) {
-				texture_handler->onPaintCallback(buffer, width, height);
-			};
-			handler->onBrowserClose = [texture_handler] () mutable {
-				delete texture_handler;
-			};
+			const flutter::EncodableMap* map = std::get_if<flutter::EncodableMap>(method_call.arguments());
+			if (!map) {
+				result->Error("NoArguments");
+				return;
+			}
 
-			app->CreateBrowser(handler);
-			result->Success(flutter::EncodableValue(texture_handler->texture_id()));
+			const auto browser_id = GetOptionalValue<int>(*map, "browserID");
+			if (!browser_id) {
+				result->Error("InvalidArguments", "browserID");
+				return;
+			}
+
+			const auto headless = GetOptionalValue<bool>(*map, "headless").value_or(false);
+			auto handler = new WebviewHandler(messenger, *browser_id, headless);
+			if (headless) {
+				app->CreateBrowser(handler);
+				result->Success();
+			} else {
+				auto texture_handler = new TextureHandler(texture_registrar);
+				handler->onPaintCallback = [texture_handler](const void* buffer, int32_t width, int32_t height) {
+					texture_handler->onPaintCallback(buffer, width, height);
+				};
+				handler->onBrowserClose = [texture_handler] () mutable {
+					delete texture_handler;
+				};
+
+				app->CreateBrowser(handler);
+				result->Success(flutter::EncodableValue(texture_handler->texture_id()));
+			}
 		} else if (method_call.method_name().compare("imeSetComposition") == 0) {
 			auto browser = WebviewHandler::CurrentFocusedBrowser();
 			if (browser) {

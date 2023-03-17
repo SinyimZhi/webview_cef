@@ -51,7 +51,7 @@ public:
                         const CefRange& selection_range,
                         const CefRenderHandler::RectList& character_bounds)> onImeCompositionRangeChangedCallback;
 
-    explicit WebviewHandler(flutter::BinaryMessenger* messenger, const int browser_id);
+    explicit WebviewHandler(flutter::BinaryMessenger* messenger, int browser_id, bool headless);
     ~WebviewHandler();
 
     // CefClient methods:

@@ -111,7 +111,7 @@ const CefRefPtr<CefBrowser> WebviewHandler::CurrentFocusedBrowser() {
     return current_focused_browser_;
 }
 
-WebviewHandler::WebviewHandler(flutter::BinaryMessenger* messenger, const int browser_id) {
+WebviewHandler::WebviewHandler(flutter::BinaryMessenger* messenger, int browser_id, bool headless) {
     const auto browser_id_str = std::to_string(browser_id);
     const auto method_channel_name = "webview_cef/" + browser_id_str;
     browser_channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
@@ -494,7 +494,7 @@ bool WebviewHandler::GetScreenInfo(CefRefPtr<CefBrowser> browser, CefScreenInfo&
 
 void WebviewHandler::OnPaint(CefRefPtr<CefBrowser> browser, CefRenderHandler::PaintElementType type,
                             const CefRenderHandler::RectList &dirtyRects, const void *buffer, int w, int h) {
-    onPaintCallback(buffer, w, h);
+    if (this->onPaintCallback) this->onPaintCallback(buffer, w, h);
 }
 
 void WebviewHandler::HandleMethodCall(

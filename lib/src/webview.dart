@@ -56,9 +56,12 @@ class WebViewController extends ValueNotifier<bool> {
 
   final ValueNotifier<CursorType> _cursorType = ValueNotifier(CursorType.pointer);
 
+  final bool headless;
   Future<void> get ready => _creatingCompleter.future;
 
-  WebViewController() : super(false);
+  WebViewController({
+    this.headless = false,
+  }) : super(false);
 
   /// Initializes the underlying platform view.
   Future<void> initialize() async {
@@ -72,7 +75,8 @@ class WebViewController extends ValueNotifier<bool> {
       _browserID = ++_id;
       _broswerChannel = MethodChannel('webview_cef/$_browserID');
       _broswerChannel.setMethodCallHandler(_methodCallhandler);
-      _textureId = await _pluginChannel.invokeMethod<int>('createBrowser', _browserID) ?? 0;
+      final createBrowserArgs = {'browserID': _browserID, 'headless': headless};
+      _textureId = await _pluginChannel.invokeMethod<int>('createBrowser', createBrowserArgs) ?? 0;
       _eventChannel = EventChannel('webview_cef/$_browserID/events');
       _eventStreamSubscription = _eventChannel.receiveBroadcastStream().listen(_handleBrowserEvents);
     } on PlatformException catch (e) {
