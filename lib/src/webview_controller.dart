@@ -17,11 +17,17 @@ final _cefStarted = Completer();
 _startCEF() async {
   if (!_hasCallStartCEF) {
     _hasCallStartCEF = true;
-    _pluginChannel.invokeMethod("startCEF");
+
     _pluginChannel.setMethodCallHandler((call) async {
       if (call.method == 'onCEFInitialized') {
         _cefStarted.complete();
       }
+    });
+
+    _pluginChannel.invokeMethod('startCEF', {
+      'cachePath': GlobalCefSettings.cachePath,
+      'rootCachePath': GlobalCefSettings.rootCachePath,
+      'userDataPath': GlobalCefSettings.userDataPath,
     });
   }
 

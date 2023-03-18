@@ -29,12 +29,11 @@ namespace webview_cef {
 	CefRefPtr<WebviewApp> app;
 	CefMainArgs mainArgs;
 
-	void startCEF() {
+	void startCEF(CefSettings cefs) {
 		CefWindowInfo window_info;
 		CefBrowserSettings settings;
 		window_info.SetAsWindowless(nullptr);
 
-		CefSettings cefs;
 		cefs.windowless_rendering_enabled = true;
 		CefInitialize(mainArgs, cefs, app.get(), nullptr);
 		CefRunMessageLoop();
@@ -51,6 +50,26 @@ namespace webview_cef {
 			}
 		}
 		return std::nullopt;
+	}
+
+	CefSettings GetCefSettings(const flutter::MethodCall<flutter::EncodableValue>& method_call) {
+		const flutter::EncodableMap* map = std::get_if<flutter::EncodableMap>(method_call.arguments());
+		CefSettings settings;
+		if (!map) return settings;
+
+		const auto cache_path = GetOptionalValue<std::string>(*map, "cachePath");
+		if (cache_path) CefString(&settings.cache_path) = cache_path.value();
+
+		const auto root_cache_path = GetOptionalValue<std::string>(*map, "rootCachePath");
+		if (root_cache_path) CefString(&settings.root_cache_path) = root_cache_path.value();
+
+		const auto user_data_path = GetOptionalValue<std::string>(*map, "userDataPath");
+		if (user_data_path) CefString(&settings.user_data_path) = user_data_path.value();
+
+std::cout << CefString(&settings.cache_path) << std::endl;
+std::cout << CefString(&settings.root_cache_path) << std::endl;
+std::cout << CefString(&settings.user_data_path) << std::endl;
+		return settings;
 	}
 
 	// static
@@ -88,7 +107,10 @@ namespace webview_cef {
 		std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
 		if (method_call.method_name().compare("startCEF") == 0) {
 			if (!init) {
-				new std::thread(startCEF);
+				auto cefSettings = GetCefSettings(method_call);
+				new std::thread([cefSettings](){
+					startCEF(cefSettings);
+				});
 				init = true;
 			}
 			result->Success();

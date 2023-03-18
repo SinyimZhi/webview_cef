@@ -7,6 +7,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+part 'cef_settings.dart';
 part 'webview_cursor.dart';
 part 'async_channel_message.dart';
 part 'text_input.dart';
