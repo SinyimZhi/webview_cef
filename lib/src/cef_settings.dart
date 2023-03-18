@@ -15,7 +15,7 @@ class CefSettings {
   /// instances via the CefRequestContextSettings.cache_path value. When using
   /// the Chrome runtime the "default" profile will be used if [cachePath] and
   /// [rootCachePath] have the same value.
-  static String? cachePath;
+  String? cachePath;
 
   /// The root directory that all [CefSettings.cachePath] and
   /// CefRequestContextSettings.cache_path values must have in common. If this
@@ -24,7 +24,7 @@ class CefSettings {
   /// then it must be an absolute path. Failure to set this value correctly may
   /// result in the sandbox blocking read/write access to the [cachePath]
   /// directory.
-  static String? rootCachePath;
+  String? rootCachePath;
 
   /// The location where user data such as the Widevine CDM module and spell
   /// checking dictionary files will be stored on disk. If this value is empty
@@ -34,5 +34,5 @@ class CefSettings {
   /// directory under the user profile directory on Windows). If this value is
   /// non-empty then it must be an absolute path. When using the Chrome runtime
   /// this value will be ignored in favor of the [rootCachePath] value.
-  static String? userDataPath;
+  String? userDataPath;
 }
