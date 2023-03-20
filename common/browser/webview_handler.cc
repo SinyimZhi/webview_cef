@@ -140,7 +140,6 @@ WebviewHandler::WebviewHandler(flutter::BinaryMessenger* messenger, int browser_
             return nullptr;
         },
         [this](const flutter::EncodableValue* arguments) {
-            event_sink_ = nullptr;
             return nullptr;
         }
     );
