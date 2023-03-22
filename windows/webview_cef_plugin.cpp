@@ -66,9 +66,6 @@ namespace webview_cef {
 		const auto user_data_path = GetOptionalValue<std::string>(*map, "userDataPath");
 		if (user_data_path) CefString(&settings.user_data_path) = user_data_path.value();
 
-std::cout << CefString(&settings.cache_path) << std::endl;
-std::cout << CefString(&settings.root_cache_path) << std::endl;
-std::cout << CefString(&settings.user_data_path) << std::endl;
 		return settings;
 	}
 
