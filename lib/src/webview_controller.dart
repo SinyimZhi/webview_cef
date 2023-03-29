@@ -253,6 +253,30 @@ class WebViewController extends ValueNotifier<bool> {
     return _AsyncChannelMessageManager.invokeMethod(_broswerChannel, message);
   }
 
+  /// If true, allows "Ctrl + +/-" and "Ctrl + mouse wheel" to control page scaling
+  bool allowShortcutZoom = false;
+  double _zoomLevel = 1.0;
+  Future<double?> getZoomLevel() async {
+    if (_isDisposed) {
+      return null;
+    }
+    assert(value);
+    final v = await _broswerChannel.invokeMethod<double>('getZoomLevel');
+    if (v != null) _zoomLevel = v;
+    return v;
+  }
+
+  Future<void> setZoomLevel(double level) async {
+    if (_isDisposed) {
+      return;
+    }
+    assert(value);
+    await _broswerChannel.invokeMethod('setZoomLevel', level);
+    _zoomLevel = level;
+  }
+
+  Future<void> _increaseZoomLevel(double dz) => setZoomLevel(_zoomLevel + dz);
+
   Future<void> openDevTools() async {
     if (_isDisposed) {
       return;

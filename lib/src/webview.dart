@@ -54,6 +54,7 @@ class WebViewState extends State<WebView> with _WebViewTextInput {
     return SizedBox.expand(key: _key, child: _buildInner());
   }
 
+  bool _controlKeyDown = false;
   Widget _buildInner() {
     return NotificationListener<SizeChangedLayoutNotification>(
       onNotification: (notification) {
@@ -69,6 +70,7 @@ class WebViewState extends State<WebView> with _WebViewTextInput {
             // print('webview onFocusChange chagned to: ${FocusScope.of(context).focusedChild?.toString()}');
             // if (!focused) _controller._unfocus();
           },
+          onKeyEvent: _handleKeyEvent,
           child: Listener(
             onPointerHover: (ev) {
               _controller._cursorMove(ev.localPosition);
@@ -93,6 +95,11 @@ class WebViewState extends State<WebView> with _WebViewTextInput {
             onPointerSignal: (signal) {
               if (signal is PointerScrollEvent) {
                 var dy = signal.scrollDelta.dy.round();
+                if (_shouldUpdateZoomLevel()) {
+                  _controller._increaseZoomLevel(dy > 0 ? -kZoomLevelUnit : kZoomLevelUnit);
+                  return;
+                }
+
                 if (!Platform.isMacOS) dy = -dy;
                 _controller._setScrollDelta(signal.localPosition,
                     signal.scrollDelta.dx.round(), dy);
@@ -109,6 +116,11 @@ class WebViewState extends State<WebView> with _WebViewTextInput {
                 return MouseRegion(
                   cursor: value.transform,
                   child: child,
+                  onEnter: (event) {
+                    if (!_focusNode.hasFocus) {
+                      if (mounted) FocusScope.of(context).requestFocus(_focusNode);
+                    }
+                  },
                 );
               },
             ),
@@ -117,6 +129,32 @@ class WebViewState extends State<WebView> with _WebViewTextInput {
       ),
     );
   }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
+      if (event is KeyDownEvent) {
+        _controlKeyDown = true;
+      } else if (event is KeyUpEvent) {
+        _controlKeyDown = false;
+      }
+      return KeyEventResult.ignored;
+    } else if (event.logicalKey == LogicalKeyboardKey.equal) {
+      if (_shouldUpdateZoomLevel()) {
+        _controller._increaseZoomLevel(kZoomLevelUnit);
+        return KeyEventResult.handled;
+      }
+    } else if (event.logicalKey == LogicalKeyboardKey.minus) {
+      if (_shouldUpdateZoomLevel()) {
+        _controller._increaseZoomLevel(-kZoomLevelUnit);
+        return KeyEventResult.handled;
+      }
+    }
+
+    return KeyEventResult.ignored;
+  }
+
+  static const kZoomLevelUnit = 0.25;
+  bool _shouldUpdateZoomLevel() => _controller.allowShortcutZoom && _controlKeyDown;
 
   void _reportSurfaceSize(BuildContext context) async {
     final box = _key.currentContext?.findRenderObject() as RenderBox?;

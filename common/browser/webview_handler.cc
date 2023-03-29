@@ -552,6 +552,14 @@ void WebviewHandler::HandleMethodCall(
         this->sendScrollEvent(x, y, deltaX, deltaY);
         result->Success();
     }
+    else if (method_call.method_name().compare("setZoomLevel") == 0) {
+        const auto level = std::get_if<double>(method_call.arguments());
+        if (level) browser_->GetHost()->SetZoomLevel(*level);
+        result->Success();
+    }
+    else if (method_call.method_name().compare("getZoomLevel") == 0) {
+        result->Success(browser_->GetHost()->GetZoomLevel());
+    }
     else if (method_call.method_name().compare("unfocus") == 0) {
         this->Unfocus();
         result->Success();
