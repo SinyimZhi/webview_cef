@@ -2,6 +2,7 @@ library webview;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -91,8 +92,10 @@ class WebViewState extends State<WebView> with _WebViewTextInput {
             },
             onPointerSignal: (signal) {
               if (signal is PointerScrollEvent) {
+                var dy = signal.scrollDelta.dy.round();
+                if (!Platform.isMacOS) dy = -dy;
                 _controller._setScrollDelta(signal.localPosition,
-                    signal.scrollDelta.dx.round(), signal.scrollDelta.dy.round());
+                    signal.scrollDelta.dx.round(), dy);
               }
             },
             onPointerPanZoomUpdate: (event) {
