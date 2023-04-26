@@ -40,6 +40,9 @@ class WebViewState extends State<WebView> with _WebViewTextInput {
       final box = _key.currentContext!.findRenderObject() as RenderBox;
       updateIMEComposionPosition(x, y, box.localToGlobal(Offset.zero));
     };
+
+    /// Update the widget once the browser being ready
+    _controller.ready.then((_) => setState(() {}));
   }
 
   @override
