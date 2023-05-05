@@ -305,7 +305,7 @@ void WebviewHandler::setCookie(const std::string& domain, const std::string& key
 
 		cookie.httponly = true;
 		cookie.secure = false;
-		std::string httpDomain = "https://" + domain + "/setcookie";
+		std::string httpDomain = "https://" + domain + "/cookiestorage";
 		manager->SetCookie(httpDomain, cookie, nullptr);
     }
 }
@@ -314,9 +314,7 @@ void WebviewHandler::deleteCookie(const std::string& domain, const std::string& 
 {
     CefRefPtr<CefCookieManager> manager = CefCookieManager::GetGlobalManager(nullptr);
     if (manager) {
-        std::string httpDomain = "https://";
-        httpDomain.append(domain);
-        httpDomain.append("/deletecookie");
+        std::string httpDomain = "https://" + domain + "/cookiestorage";
         manager->DeleteCookies(httpDomain, key, nullptr);
     }
 }
@@ -362,8 +360,10 @@ bool WebviewHandler::visitUrlCookies(const std::string& domain, const bool& isHt
 			return false;
 		}
     }
+    
+    std::string httpDomain = "https://" + domain + "/cookiestorage";
 
-    if (manager->VisitUrlCookies(domain, isHttpOnly, m_CookieVisitor))
+    if (manager->VisitUrlCookies(httpDomain, isHttpOnly, m_CookieVisitor))
     {
         if (onUrlCookieVisitedCb) {
             onUrlCookieVisitedCb(m_CookieVisitor->getVisitedCookies());
