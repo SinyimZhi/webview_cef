@@ -121,6 +121,24 @@
         [CefWrapper visitUrlCookies:domain isHttpOnly:[isHttpOnly boolValue]];
         result(nil);
     }
+    else if ([@"setJavaScriptChannels" isEqualToString:call.method])  {
+        NSArray<NSArray *> *_arg = call.arguments;
+        NSArray * channels = [_arg objectAtIndex:0];
+        [CefWrapper setJavaScriptChannels:channels];
+        result(nil);
+    }
+    else if ([@"sendJavaScriptChannelCallBack" isEqualToString:call.method])  {
+        NSArray<NSString *> *_arg = call.arguments;
+        NSArray * channels = [_arg objectAtIndex:0];
+        [CefWrapper sendJavaScriptChannelCallBack:error  result:result callbackId:callbackId frameId:frameId];
+        result(nil);
+    }
+    else if ([@"executeJavaScript" isEqualToString:call.method])  {
+        NSArray<NSString *> *_arg = call.arguments;
+        NSString * code = [_arg objectAtIndex:0];
+        [CefWrapper executeJavaScript:code];
+        result(nil);
+    }
     else {
         result(FlutterMethodNotImplemented);
     }

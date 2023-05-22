@@ -41,6 +41,22 @@ class _MyAppState extends State<MyApp> {
         _textController.text = url;
       },
     ));
+
+    // ignore: prefer_collection_literals
+    final Set<JavascriptChannel> jsChannels = [
+      JavascriptChannel(
+          name: 'Print',
+          onMessageReceived: (JavascriptMessage message) {
+            print(message.message);
+            _controller.sendJavaScriptChannelCallBack(
+                false,
+                "{'code':'200','messeage':'print succeed!'}",
+                message.callbackId,
+                message.frameId);
+          }),
+    ].toSet();
+
+    await _controller.setJavaScriptChannels(jsChannels);
     // If the widget was removed from the tree while the asynchronous platform
     // message was in flight, we want to discard the reply rather than calling
     // setState to update our non-existent appearance.
@@ -111,6 +127,9 @@ class _MyAppState extends State<MyApp> {
                     } else if (url.startsWith('www.')) {
                       _textController.text = 'https://$url';
                       _controller.loadUrl('https://$url');
+                    } else if (url.endsWith('.html') || url.endsWith('.htm')) {
+                      _textController.text = url;
+                      _controller.loadUrl('file:///$url');
                     } else {
                       _textController.text = url;
                       _controller.loadUrl('https://google.com/search?q=$url');
