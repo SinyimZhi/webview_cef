@@ -139,7 +139,6 @@ void WebviewApp::OnWebKitInitialized()
                     null == r ? a = '' : (a = '_' + new Date + (1e3 + Math.floor(8999 * Math.random())), window[a] = function (n, e) { 
                         return function () { 
                             try {
-                                console.log(e,arguments[1]);
                                 e && e.call && e.call(null, arguments[1]) 
                             } finally {
                                 delete window[n]

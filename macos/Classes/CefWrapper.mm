@@ -12,6 +12,7 @@
 #import "../../common/webview_app.h"
 #import "../../common/webview_handler.h"
 #import "../../common/webview_cookieVisitor.h"
+#import "../../common/webview_js_handler.h"
 
 #include <thread>
 
@@ -132,17 +133,12 @@ FlutterMethodChannel* f_channel;
 
     //JavaScriptChannel called
  	handler.get()->onJavaScriptChannelMessage = [](std::string channelName, std::string message, std::string callbackId, std::string frameId) {
-		flutter::EncodableMap retMap;
-		retMap[flutter::EncodableValue("channel")] = flutter::EncodableValue(channelName);
-		retMap[flutter::EncodableValue("message")] = flutter::EncodableValue(message);
-		retMap[flutter::EncodableValue("callbackId")] = flutter::EncodableValue(callbackId);
-		retMap[flutter::EncodableValue("frameId")] = flutter::EncodableValue(frameId);
-		channel->InvokeMethod("javascriptChannelMessage", std::make_unique<flutter::EncodableValue>(retMap));
-
-        [f_channel invokeMethod:@"javascriptChannelMessage" arguments:[NSString stringWithCString:channelName.c_str() encoding:NSUTF8StringEncoding 
-        message:[NSString stringWithCString:message.c_str() encoding:NSUTF8StringEncoding] 
-        callbackId:[NSString stringWithCString:callbackId.c_str() encoding:NSUTF8StringEncoding] 
-        frameId:[NSString stringWithCString:frameId.c_str() encoding:NSUTF8StringEncoding]]];
+        NSMutableDictionary * dict = [NSMutableDictionary dictionary];
+        dict[@"channel"] = [NSString stringWithCString:channelName.c_str() encoding:NSUTF8StringEncoding];
+        dict[@"message"]  = [NSString stringWithCString:message.c_str() encoding:NSUTF8StringEncoding];
+        dict[@"callbackId"]  = [NSString stringWithCString:callbackId.c_str() encoding:NSUTF8StringEncoding];
+        dict[@"frameId"]  = [NSString stringWithCString:frameId.c_str() encoding:NSUTF8StringEncoding];
+        [f_channel invokeMethod:@"javascriptChannelMessage" arguments:dict];
 	};   
 
     CefSettings settings;
@@ -319,10 +315,10 @@ FlutterMethodChannel* f_channel;
     std::vector<std::string> stdChannels;
     NSEnumerator * enumerator = [channels objectEnumerator];
     NSString * value;
-    while (value = [enumerator nextObject] != nil) {
-        stdChannels.insert(std::string([value cStringUsingEncoding:NSUTF8StringEncoding]));
+    while (value = [enumerator nextObject]) {
+        stdChannels.push_back(std::string([value cStringUsingEncoding:NSUTF8StringEncoding]));
     }
-    handler.get()->setJavaScriptChannels(channels);
+    handler.get()->setJavaScriptChannels(stdChannels);
 }
 
 + (void) sendJavaScriptChannelCallBack: (bool)error  result:(NSString *)result callbackId:(NSString *)callbackId frameId:(NSString *)frameId {
@@ -331,6 +327,6 @@ FlutterMethodChannel* f_channel;
 }
 
 + (void) executeJavaScript: (NSString *)code {
-    handler.get()->executeJavaScript(std::string([channels cStringUsingEncoding:NSUTF8StringEncoding]));
+    handler.get()->executeJavaScript(std::string([code cStringUsingEncoding:NSUTF8StringEncoding]));
 }
 @end

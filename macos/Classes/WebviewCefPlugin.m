@@ -129,8 +129,11 @@
     }
     else if ([@"sendJavaScriptChannelCallBack" isEqualToString:call.method])  {
         NSArray<NSString *> *_arg = call.arguments;
-        NSArray * channels = [_arg objectAtIndex:0];
-        [CefWrapper sendJavaScriptChannelCallBack:error  result:result callbackId:callbackId frameId:frameId];
+        NSString * error = [_arg objectAtIndex:0];
+        NSString * ret = [_arg objectAtIndex:1];
+        NSString * callbackId = [_arg objectAtIndex:2];
+        NSString * frameId = [_arg objectAtIndex:3];
+        [CefWrapper sendJavaScriptChannelCallBack:[error boolValue]  result:ret callbackId:callbackId frameId:frameId];
         result(nil);
     }
     else if ([@"executeJavaScript" isEqualToString:call.method])  {

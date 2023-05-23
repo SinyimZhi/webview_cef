@@ -420,7 +420,7 @@ bool WebviewHandler::sendJavaScriptChannelCallBack(const bool error, const std::
     BrowserList::iterator bit = browser_list_.begin();
     for (; bit != browser_list_.end(); ++bit) {
         CefRefPtr<CefFrame> frame = (*bit)->GetMainFrame();
-        if (frame->GetIdentifier() == _atoi64(frameId.c_str()))
+        if (frame->GetIdentifier() == atoll(frameId.c_str()))
         {
             frame->SendProcessMessage(PID_RENDERER, message);
             return true;

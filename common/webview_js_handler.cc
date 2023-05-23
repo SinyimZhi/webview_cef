@@ -1,4 +1,7 @@
 #include "webview_js_handler.h"
+#include <atomic>
+
+std::atomic_long s_nReqID {1001};
 
 bool CefJSHandler::Execute(const CefString& name,
 	CefRefPtr<CefV8Value> object,
@@ -124,8 +127,7 @@ bool CefJSBridge::StartRequest(int reqId,
 
 int CefJSBridge::GetNextReqID()
 {
-	static LONG s_nReqID = 1001;
-	LONG nRet = InterlockedIncrement(&s_nReqID);
+	long nRet = ++s_nReqID;
 	if (nRet < 0)
 	{
 		nRet = 0;
@@ -133,7 +135,7 @@ int CefJSBridge::GetNextReqID()
 
 	while (nRet == 0)
 	{
-		nRet = InterlockedIncrement(&s_nReqID);
+		nRet = ++s_nReqID;
 	}
 
 	return nRet;
@@ -203,10 +205,10 @@ bool CefJSBridge::ExecuteJSCallbackFunc(int callbackId, bool error, const CefStr
 			auto frame = it->second.first;
 			CefString callback = it->second.second;
 
-			if (frame.get())
+			if (callback != "" && frame.get())
 			{
 				std::ostringstream strStream;
-				strStream <<"window['" << callback.c_str() << "'](" << callbackId * -1 << ", " << result.c_str() << ");";
+				strStream <<"window['" << callback.ToString() << "'](" << callbackId * -1 << ", " << result.ToString() << ");";
 				strStream.flush();
 
 				CefString strCode = strStream.str();
